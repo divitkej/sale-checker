@@ -313,6 +313,7 @@ def run(test_notification=False):
         return 1
 
     state = load_json(STATE_FILE, {})
+    summary = []
     for product in products:
         url = product["url"]
         name = product.get("name") or url
@@ -326,6 +327,7 @@ def run(test_notification=False):
             entry["failures"] = failures
             state[url] = entry
             print(f"FAILED  {name}: {exc} (failure {failures} in a row)")
+            summary.append(f"{name}: could not read the price")
             if failures == FAILURE_ALERT_THRESHOLD:
                 notify(
                     "Sale checker needs attention",
@@ -340,6 +342,8 @@ def run(test_notification=False):
         label = f" [{variant}]" if variant else ""
         shown = "sold out" if available is False else format_price(price, product.get("currency", ""))
         print(f"OK      {name}{label}: {shown}")
+        size = f" {variant.split(' / ')[-1]}" if variant else ""
+        summary.append(f"{name}{size}: {shown}")
         if message:
             print(f"NOTIFY  {message}")
             target = product.get("target_price")
@@ -349,6 +353,21 @@ def run(test_notification=False):
             else:
                 title = "Back in stock" if back_in_stock else "Price drop"
                 notify(title, message, url=url)
+
+    # Confirm once that the schedule itself works, not just manual runs.
+    meta = state.setdefault("_meta", {})
+    if os.environ.get("GITHUB_EVENT_NAME") == "schedule" and not meta.get("schedule_confirmed"):
+        try:
+            notify(
+                "Automatic checks are running",
+                "This is the first automatic check. Prices are checked every 30 minutes.\n"
+                + "\n".join(summary),
+                priority="default",
+            )
+            meta["schedule_confirmed"] = True
+        except requests.RequestException as exc:
+            # Try again on the next scheduled run instead of losing this run's prices.
+            print(f"Could not send the schedule notice: {exc}")
 
     STATE_FILE.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return 0
