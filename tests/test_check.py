@@ -11,6 +11,7 @@ from check import (  # noqa: E402
     extract_price,
     parse_price,
     pick_shopify_variant,
+    shopify_buy_url,
     shopify_feed_url,
 )
 
@@ -133,7 +134,7 @@ def test_shopify_feed_url_drops_query():
 
 def test_size_ignores_variant_in_link():
     product = {"url": JEAN_URL, "size": "32"}
-    assert pick_shopify_variant(JEAN, product) == (129.0, False, "32")
+    assert pick_shopify_variant(JEAN, product) == (129.0, False, "32", 2)
 
 
 def test_size_as_number():
@@ -207,7 +208,7 @@ COTTON_ON = {
 
 def test_waist_matches_any_length():
     product = {"url": JEAN_URL, "size": "32"}
-    assert pick_shopify_variant(COTTON_ON, product) == (159.0, True, "VICE BLUE / W32L34")
+    assert pick_shopify_variant(COTTON_ON, product)[:3] == (159.0, True, "VICE BLUE / W32L34")
 
 
 def test_waist_does_not_match_length():
@@ -218,7 +219,7 @@ def test_waist_does_not_match_length():
 
 def test_size_list_tracks_cheapest_in_stock():
     product = {"url": JEAN_URL, "size": ["W32L32", "W32L34"]}
-    assert pick_shopify_variant(COTTON_ON, product) == (159.0, True, "VICE BLUE / W32L34")
+    assert pick_shopify_variant(COTTON_ON, product)[:3] == (159.0, True, "VICE BLUE / W32L34")
 
 
 def test_size_list_ignores_other_lengths():
@@ -234,3 +235,9 @@ def test_alert_names_the_length():
     entry = {"price": 319.0, "available": False}
     message, _ = evaluate(PRODUCT, 319.0, entry, True, "VICE BLUE / W32L34")
     assert message == "Shoe (W32L34) is back in stock at $319."
+
+
+def test_buy_url_is_cart_link():
+    assert shopify_buy_url(JEAN_URL, 51702654763140) == (
+        "https://cottonon.ae/cart/51702654763140:1"
+    )

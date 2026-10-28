@@ -156,7 +156,7 @@ def size_matches(value, wanted):
 
 
 def pick_shopify_variant(data, product):
-    """Choose the variant to track. Returns (price, available, variant title)."""
+    """Choose the variant to track. Returns (price, available, variant title, variant id)."""
     variants = data.get("variants") or []
     if not variants:
         raise ValueError("product has no variants")
@@ -193,11 +193,21 @@ def pick_shopify_variant(data, product):
     in_stock = [v for v in matches if v.get("available")]
     best = min(in_stock or matches, key=lambda v: v["price"])
     # The .js feed gives prices in the smallest currency unit (fils, cents).
-    return best["price"] / 100, bool(in_stock), best.get("title")
+    return best["price"] / 100, bool(in_stock), best.get("title"), best.get("id")
+
+
+def shopify_buy_url(url, variant_id):
+    """Shopify cart link that opens checkout with one of this variant in the cart."""
+    parts = urlsplit(url)
+    return f"{parts.scheme}://{parts.netloc}/cart/{variant_id}:1"
 
 
 def fetch_price(product):
-    """Returns (price, available, variant). available is None when the page does not say."""
+    """Returns (price, available, variant, buy_url).
+
+    available is None when the page does not say. buy_url is only set for
+    Shopify variants that are in stock.
+    """
     feed = shopify_feed_url(product["url"])
     if feed and not product.get("selector"):
         response = requests.get(feed, headers=HEADERS, timeout=30)
@@ -207,25 +217,36 @@ def fetch_price(product):
             except ValueError:
                 data = None
             if isinstance(data, dict) and "variants" in data:
-                return pick_shopify_variant(data, product)
+                price, available, variant, variant_id = pick_shopify_variant(data, product)
+                buy_url = (
+                    shopify_buy_url(product["url"], variant_id)
+                    if available and variant_id
+                    else None
+                )
+                return price, available, variant, buy_url
     if product.get("size") is not None:
         raise ValueError("size tracking only works on Shopify stores")
 
     response = requests.get(product["url"], headers=HEADERS, timeout=30)
     response.raise_for_status()
-    return extract_price(response.text, product.get("selector")), None, None
+    return extract_price(response.text, product.get("selector")), None, None, None
 
 
-def notify(title, message, url=None, priority="high"):
+def notify(title, message, url=None, priority="high", buy_url=None):
     topic = os.environ.get("NTFY_TOPIC")
     if not topic:
         print(f"[no NTFY_TOPIC set] {title}: {message}")
         return
     server = os.environ.get("NTFY_SERVER", "https://ntfy.sh").rstrip("/")
     headers = {"Title": title.encode("utf-8"), "Priority": priority}
+    actions = []
+    if buy_url:
+        actions.append(f"view, Buy now, {buy_url}")
     if url:
         headers["Click"] = url
-        headers["Actions"] = f"view, Open product, {url}"
+        actions.append(f"view, View product, {url}")
+    if actions:
+        headers["Actions"] = "; ".join(actions)
     requests.post(
         f"{server}/{topic}", data=message.encode("utf-8"), headers=headers, timeout=30
     ).raise_for_status()
@@ -302,9 +323,34 @@ def load_json(path, default):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def send_test_notification():
+    """Send a test alert with a working Buy now button for the first jean in stock."""
+    for product in load_json(PRODUCTS_FILE, []):
+        try:
+            price, _, variant, buy_url = fetch_price(product)
+        except Exception as exc:  # noqa: BLE001
+            print(f"Skipping {product.get('name')}: {exc}")
+            continue
+        if not buy_url:
+            continue
+        check = requests.get(buy_url, headers=HEADERS, timeout=30, allow_redirects=False)
+        print(f"BUY     {buy_url} -> {check.status_code} {check.headers.get('Location', '')}")
+        size = variant.split(" / ")[-1] if variant else ""
+        notify(
+            "Sale checker",
+            "Test notification. Tap Buy now to check it opens checkout with "
+            f"{product.get('name')} {size} at "
+            f"{format_price(price, product.get('currency', ''))}. You do not have to pay.",
+            url=product["url"],
+            buy_url=buy_url,
+        )
+        return
+    notify("Sale checker", "Test notification. Your phone is set up correctly.")
+
+
 def run(test_notification=False):
     if test_notification:
-        notify("Sale checker", "Test notification. Your phone is set up correctly.")
+        send_test_notification()
         return 0
 
     products = load_json(PRODUCTS_FILE, [])
@@ -319,7 +365,7 @@ def run(test_notification=False):
         name = product.get("name") or url
         entry = state.get(url, {})
         try:
-            price, available, variant = fetch_price(product)
+            price, available, variant, buy_url = fetch_price(product)
             if price is None:
                 raise ValueError("price not found on the page")
         except Exception as exc:  # noqa: BLE001  one bad product must not stop the rest
@@ -349,10 +395,10 @@ def run(test_notification=False):
             target = product.get("target_price")
             if target is not None and price <= target:
                 # Urgent is the loudest ntfy level, so a target hit stands out.
-                notify("Target price hit", message, url=url, priority="urgent")
+                notify("Target price hit", message, url=url, priority="urgent", buy_url=buy_url)
             else:
                 title = "Back in stock" if back_in_stock else "Price drop"
-                notify(title, message, url=url)
+                notify(title, message, url=url, buy_url=buy_url)
 
     # Confirm once that the schedule itself works, not just manual runs.
     meta = state.setdefault("_meta", {})
