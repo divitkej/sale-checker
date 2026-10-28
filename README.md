@@ -39,7 +39,7 @@ Checks product prices every 30 minutes on GitHub Actions and sends a push notifi
 | `name` | no | Label used in notifications |
 | `currency` | no | Symbol shown in notifications |
 | `target_price` | no | Also alert when the price is at or below this, even on the first check |
-| `size` | no | Shopify stores only: the size to follow, for example `"32"`. Any size in the link is ignored |
+| `size` | no | Shopify stores only: the size to follow, for example `"32"` (any length), `"W32L32"`, or a list like `["W32L32", "W32L34"]`. Any size in the link is ignored |
 | `size_option` | no | Shopify stores only: option name to match the size against (for example `"Waist"`) when a product has two options that share values |
 | `selector` | no | CSS selector for the price element, for sites the automatic detection misses |
 

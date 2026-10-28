@@ -214,3 +214,23 @@ def test_waist_does_not_match_length():
     data = {"variants": [{"title": "W24L32", "option1": "W24L32", "price": 100, "available": True}]}
     with pytest.raises(SizeNotFound):
         pick_shopify_variant(data, {"url": JEAN_URL, "size": "32"})
+
+
+def test_size_list_tracks_cheapest_in_stock():
+    product = {"url": JEAN_URL, "size": ["W32L32", "W32L34"]}
+    assert pick_shopify_variant(COTTON_ON, product) == (159.0, True, "VICE BLUE / W32L34")
+
+
+def test_size_list_ignores_other_lengths():
+    data = {"variants": [
+        {"title": "W32L30", "option1": "W32L30", "price": 100, "available": True},
+        {"title": "W32L32", "option1": "W32L32", "price": 300, "available": True},
+    ]}
+    product = {"url": JEAN_URL, "size": ["W32L32", "W32L34"]}
+    assert pick_shopify_variant(data, product)[2] == "W32L32"
+
+
+def test_alert_names_the_length():
+    entry = {"price": 319.0, "available": False}
+    message, _ = evaluate(PRODUCT, 319.0, entry, True, "VICE BLUE / W32L34")
+    assert message == "Shoe (W32L34) is back in stock at $319."

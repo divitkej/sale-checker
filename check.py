@@ -163,7 +163,8 @@ def pick_shopify_variant(data, product):
 
     size = product.get("size")
     if size is not None:
-        wanted = str(size).strip().lower()
+        # A list such as ["W32L32", "W32L34"] follows several sizes at once.
+        wanted = [str(x).strip().lower() for x in (size if isinstance(size, list) else [size])]
         option_names = [
             (o.get("name") if isinstance(o, dict) else o) or "" for o in data.get("options") or []
         ]
@@ -178,7 +179,7 @@ def pick_shopify_variant(data, product):
         matches = [
             v
             for v in variants
-            if any(size_matches(v.get(f"option{i}"), wanted) for i in positions)
+            if any(size_matches(v.get(f"option{i}"), w) for i in positions for w in wanted)
         ]
         if not matches:
             sizes = sorted({str(v.get("title")) for v in variants})
@@ -235,13 +236,16 @@ def format_price(value, currency):
     return f"{currency}{amount}" if currency else amount
 
 
-def evaluate(product, price, entry, available=None):
+def evaluate(product, price, entry, available=None, variant=None):
     """Decide whether a newly seen price deserves a notification.
 
     Returns (message or None, updated state entry).
     """
     name = product.get("name") or product["url"]
-    if product.get("size") is not None:
+    if variant:
+        # Shopify titles read "VICE BLUE / W32L34"; the last part is the size.
+        name = f"{name} ({variant.split(' / ')[-1]})"
+    elif product.get("size") is not None:
         name = f"{name} (size {product['size']})"
     currency = product.get("currency", "")
     target = product.get("target_price")
@@ -332,7 +336,7 @@ def run(test_notification=False):
             continue
 
         back_in_stock = bool(available) and entry.get("available") is False
-        message, state[url] = evaluate(product, price, entry, available)
+        message, state[url] = evaluate(product, price, entry, available, variant)
         label = f" [{variant}]" if variant else ""
         shown = "sold out" if available is False else format_price(price, product.get("currency", ""))
         print(f"OK      {name}{label}: {shown}")
