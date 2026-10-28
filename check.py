@@ -294,7 +294,7 @@ def notify(title, message, url=None, priority="high", buy_url=None):
 
 
 def format_price(value, currency):
-    amount = f"{value:,.2f}".rstrip("0").rstrip(".")
+    amount = f"{value:,.2f}".removesuffix(".00")
     return f"{currency}{amount}" if currency else amount
 
 

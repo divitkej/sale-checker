@@ -9,6 +9,7 @@ from check import (  # noqa: E402
     SizeNotFound,
     evaluate,
     extract_price,
+    format_price,
     parse_price,
     pick_shopify_variant,
     shopify_buy_url,
@@ -241,3 +242,11 @@ def test_buy_url_is_cart_link():
     assert shopify_buy_url(JEAN_URL, 51702654763140) == (
         "https://cottonon.ae/cart/51702654763140:1"
     )
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [(223.3, "AED 223.30"), (319.0, "AED 319"), (1299.99, "AED 1,299.99"), (100.0, "AED 100")],
+)
+def test_format_price(value, expected):
+    assert format_price(value, "AED ") == expected
