@@ -443,7 +443,11 @@ def run(test_notification=False):
 
     # Confirm once that the schedule itself works, not just manual runs.
     meta = state.setdefault("_meta", {})
-    if os.environ.get("GITHUB_EVENT_NAME") == "schedule" and not meta.get("schedule_confirmed"):
+    automatic = (
+        os.environ.get("GITHUB_EVENT_NAME") == "schedule"
+        or os.environ.get("AUTOMATIC_RUN") == "true"
+    )
+    if automatic and not meta.get("schedule_confirmed"):
         try:
             notify(
                 "Automatic checks are running",

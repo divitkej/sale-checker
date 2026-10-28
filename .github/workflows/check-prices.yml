@@ -9,6 +9,10 @@ on:
         description: "Send a test notification instead of checking prices"
         type: boolean
         default: false
+      automatic:
+        description: "Started by an outside scheduler such as cron-job.org"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -41,6 +45,7 @@ jobs:
         if: ${{ !inputs.test_notification }}
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          AUTOMATIC_RUN: ${{ inputs.automatic }}
         run: python check.py
 
       - name: Save price history
