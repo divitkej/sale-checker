@@ -169,9 +169,24 @@ def test_back_in_stock_notifies():
     assert entry["available"] is True
 
 
-def test_drop_while_sold_out_says_so():
-    message, _ = evaluate(PRODUCT, 80.0, {"price": 100.0, "available": False}, False)
-    assert message.endswith("Currently sold out in your size.")
+def test_sold_out_price_is_ignored():
+    message, entry = evaluate(PRODUCT, 50.0, {"price": 319.0, "lowest": 319.0}, False)
+    assert message is None
+    assert entry == {"price": 319.0, "lowest": 319.0, "available": False, "failures": 0}
+
+
+def test_back_in_stock_cheaper_mentions_drop():
+    entry = {"price": 319.0, "lowest": 319.0, "available": False}
+    message, _ = evaluate(PRODUCT, 250.0, entry, True)
+    assert message.startswith("Shoe is back in stock at $250. Shoe dropped from $319 to $250.")
+
+
+def test_first_check_while_sold_out_then_restock():
+    _, entry = evaluate(PRODUCT, 50.0, {}, False)
+    assert "price" not in entry
+    message, entry = evaluate(PRODUCT, 319.0, entry, True)
+    assert message == "Shoe is back in stock at $319."
+    assert entry["lowest"] == 319.0
 
 
 # Real variant layout from cottonon.ae: colour first, then waist and length.

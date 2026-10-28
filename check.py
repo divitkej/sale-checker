@@ -245,6 +245,15 @@ def evaluate(product, price, entry, available=None):
         name = f"{name} (size {product['size']})"
     currency = product.get("currency", "")
     target = product.get("target_price")
+
+    # Stores often show a stale or placeholder price on sold out sizes, so
+    # only remember that it is sold out and keep the last real price.
+    if available is False:
+        updated = dict(entry)
+        updated["available"] = False
+        updated["failures"] = 0
+        return None, updated
+
     previous = entry.get("price")
     lowest = entry.get("lowest")
 
@@ -263,9 +272,7 @@ def evaluate(product, price, entry, available=None):
     if message and lowest is not None and price < lowest:
         message += " Lowest price seen so far."
 
-    if available is False and message:
-        message += " Currently sold out in your size."
-    elif available and entry.get("available") is False:
+    if available and entry.get("available") is False:
         back = f"{name} is back in stock at {format_price(price, currency)}."
         message = f"{back} {message}" if message else back
 
@@ -326,9 +333,9 @@ def run(test_notification=False):
 
         back_in_stock = bool(available) and entry.get("available") is False
         message, state[url] = evaluate(product, price, entry, available)
-        stock = {True: "", False: " (sold out)", None: ""}[available]
         label = f" [{variant}]" if variant else ""
-        print(f"OK      {name}{label}: {format_price(price, product.get('currency', ''))}{stock}")
+        shown = "sold out" if available is False else format_price(price, product.get("currency", ""))
+        print(f"OK      {name}{label}: {shown}")
         if message:
             print(f"NOTIFY  {message}")
             title = "Back in stock" if back_in_stock else "Price drop"

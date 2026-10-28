@@ -15,9 +15,6 @@
   },
   "https://cottonon.ae/products/super-baggy-jean-3612684-79": {
     "available": false,
-    "failures": 0,
-    "last_change": "2026-10-28 06:29 UTC",
-    "lowest": 50.0,
-    "price": 50.0
+    "failures": 0
   }
 }
