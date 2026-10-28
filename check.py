@@ -149,8 +149,14 @@ def shopify_feed_url(url):
     return f"{parts.scheme}://{parts.netloc}/products/{match.group(1)}.js"
 
 
+def size_matches(value, wanted):
+    """'32' matches a plain '32' and waist and length codes like 'W32L30' or 'W32'."""
+    value = str(value or "").strip().lower()
+    return value == wanted or re.fullmatch(rf"w{re.escape(wanted)}(l\d+)?", value) is not None
+
+
 def pick_shopify_variant(data, product):
-    """Choose the variant to track. Returns (price, available)."""
+    """Choose the variant to track. Returns (price, available, variant title)."""
     variants = data.get("variants") or []
     if not variants:
         raise ValueError("product has no variants")
@@ -172,7 +178,7 @@ def pick_shopify_variant(data, product):
         matches = [
             v
             for v in variants
-            if any(str(v.get(f"option{i}") or "").strip().lower() == wanted for i in positions)
+            if any(size_matches(v.get(f"option{i}"), wanted) for i in positions)
         ]
         if not matches:
             sizes = sorted({str(v.get("title")) for v in variants})
@@ -181,16 +187,16 @@ def pick_shopify_variant(data, product):
         variant_id = parse_qs(urlsplit(product["url"]).query).get("variant", [None])[0]
         matches = [v for v in variants if str(v.get("id")) == variant_id] or variants
 
-    # When several variants fit (for example 32 Regular and 32 Long), track
+    # When several variants fit (for example W32L32 and W32L34), track
     # the cheapest one that can be bought, or the cheapest overall if none can.
     in_stock = [v for v in matches if v.get("available")]
     best = min(in_stock or matches, key=lambda v: v["price"])
     # The .js feed gives prices in the smallest currency unit (fils, cents).
-    return best["price"] / 100, bool(in_stock)
+    return best["price"] / 100, bool(in_stock), best.get("title")
 
 
 def fetch_price(product):
-    """Returns (price, available). available is None when the page does not say."""
+    """Returns (price, available, variant). available is None when the page does not say."""
     feed = shopify_feed_url(product["url"])
     if feed and not product.get("selector"):
         response = requests.get(feed, headers=HEADERS, timeout=30)
@@ -206,7 +212,7 @@ def fetch_price(product):
 
     response = requests.get(product["url"], headers=HEADERS, timeout=30)
     response.raise_for_status()
-    return extract_price(response.text, product.get("selector")), None
+    return extract_price(response.text, product.get("selector")), None, None
 
 
 def notify(title, message, url=None, priority="high"):
@@ -301,7 +307,7 @@ def run(test_notification=False):
         name = product.get("name") or url
         entry = state.get(url, {})
         try:
-            price, available = fetch_price(product)
+            price, available, variant = fetch_price(product)
             if price is None:
                 raise ValueError("price not found on the page")
         except Exception as exc:  # noqa: BLE001  one bad product must not stop the rest
@@ -321,7 +327,8 @@ def run(test_notification=False):
         back_in_stock = bool(available) and entry.get("available") is False
         message, state[url] = evaluate(product, price, entry, available)
         stock = {True: "", False: " (sold out)", None: ""}[available]
-        print(f"OK      {name}: {format_price(price, product.get('currency', ''))}{stock}")
+        label = f" [{variant}]" if variant else ""
+        print(f"OK      {name}{label}: {format_price(price, product.get('currency', ''))}{stock}")
         if message:
             print(f"NOTIFY  {message}")
             title = "Back in stock" if back_in_stock else "Price drop"

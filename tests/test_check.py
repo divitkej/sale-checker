@@ -133,15 +133,15 @@ def test_shopify_feed_url_drops_query():
 
 def test_size_ignores_variant_in_link():
     product = {"url": JEAN_URL, "size": "32"}
-    assert pick_shopify_variant(JEAN, product) == (129.0, False)
+    assert pick_shopify_variant(JEAN, product) == (129.0, False, "32")
 
 
 def test_size_as_number():
-    assert pick_shopify_variant(JEAN, {"url": JEAN_URL, "size": 30}) == (149.0, True)
+    assert pick_shopify_variant(JEAN, {"url": JEAN_URL, "size": 30})[:2] == (149.0, True)
 
 
 def test_variant_from_link_without_size():
-    assert pick_shopify_variant(JEAN, {"url": JEAN_URL}) == (99.0, True)
+    assert pick_shopify_variant(JEAN, {"url": JEAN_URL})[:2] == (99.0, True)
 
 
 def test_missing_size_lists_sizes():
@@ -159,7 +159,7 @@ def test_size_with_two_options_prefers_in_stock():
         ],
     }
     product = {"url": JEAN_URL, "size": "32", "size_option": "Waist"}
-    assert pick_shopify_variant(data, product) == (95.0, True)
+    assert pick_shopify_variant(data, product)[:2] == (95.0, True)
 
 
 def test_back_in_stock_notifies():
@@ -172,3 +172,30 @@ def test_back_in_stock_notifies():
 def test_drop_while_sold_out_says_so():
     message, _ = evaluate(PRODUCT, 80.0, {"price": 100.0, "available": False}, False)
     assert message.endswith("Currently sold out in your size.")
+
+
+# Real variant layout from cottonon.ae: colour first, then waist and length.
+COTTON_ON = {
+    "options": [{"name": "Colour"}, {"name": "Size"}],
+    "variants": [
+        {"title": "VICE BLUE / W30L32", "option1": "VICE BLUE", "option2": "W30L32",
+         "price": 9900, "available": True},
+        {"title": "VICE BLUE / W32L32", "option1": "VICE BLUE", "option2": "W32L32",
+         "price": 15900, "available": False},
+        {"title": "VICE BLUE / W32L34", "option1": "VICE BLUE", "option2": "W32L34",
+         "price": 15900, "available": True},
+        {"title": "VICE BLUE / W34L32", "option1": "VICE BLUE", "option2": "W34L32",
+         "price": 8900, "available": True},
+    ],
+}
+
+
+def test_waist_matches_any_length():
+    product = {"url": JEAN_URL, "size": "32"}
+    assert pick_shopify_variant(COTTON_ON, product) == (159.0, True, "VICE BLUE / W32L34")
+
+
+def test_waist_does_not_match_length():
+    data = {"variants": [{"title": "W24L32", "option1": "W24L32", "price": 100, "available": True}]}
+    with pytest.raises(SizeNotFound):
+        pick_shopify_variant(data, {"url": JEAN_URL, "size": "32"})
