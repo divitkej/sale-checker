@@ -1,5 +1,7 @@
 {
-  "_meta": {},
+  "_meta": {
+    "schedule_confirmed": true
+  },
   "https://cottonon.ae/products/super-baggy-jean-3612684-173": {
     "available": true,
     "failures": 0,
