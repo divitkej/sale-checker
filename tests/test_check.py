@@ -5,7 +5,14 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from check import evaluate, extract_price, parse_price  # noqa: E402
+from check import (  # noqa: E402
+    SizeNotFound,
+    evaluate,
+    extract_price,
+    parse_price,
+    pick_shopify_variant,
+    shopify_feed_url,
+)
 
 
 @pytest.mark.parametrize(
@@ -103,3 +110,65 @@ def test_target_notifies_once():
 def test_failures_reset_after_success():
     _, entry = evaluate(PRODUCT, 100.0, {"failures": 2})
     assert entry["failures"] == 0
+
+
+JEAN = {
+    "title": "Super Baggy Jean",
+    "options": [{"name": "Size", "position": 1, "values": ["30", "32", "34"]}],
+    "variants": [
+        {"id": 1, "title": "30", "option1": "30", "price": 14900, "available": True},
+        {"id": 2, "title": "32", "option1": "32", "price": 12900, "available": False},
+        {"id": 3, "title": "34", "option1": "34", "price": 9900, "available": True},
+    ],
+}
+JEAN_URL = "https://cottonon.ae/products/super-baggy-jean-3612684-173?variant=3"
+
+
+def test_shopify_feed_url_drops_query():
+    assert shopify_feed_url(JEAN_URL) == (
+        "https://cottonon.ae/products/super-baggy-jean-3612684-173.js"
+    )
+    assert shopify_feed_url("https://example.com/item/5") is None
+
+
+def test_size_ignores_variant_in_link():
+    product = {"url": JEAN_URL, "size": "32"}
+    assert pick_shopify_variant(JEAN, product) == (129.0, False)
+
+
+def test_size_as_number():
+    assert pick_shopify_variant(JEAN, {"url": JEAN_URL, "size": 30}) == (149.0, True)
+
+
+def test_variant_from_link_without_size():
+    assert pick_shopify_variant(JEAN, {"url": JEAN_URL}) == (99.0, True)
+
+
+def test_missing_size_lists_sizes():
+    with pytest.raises(SizeNotFound, match="'30', '32', '34'"):
+        pick_shopify_variant(JEAN, {"url": JEAN_URL, "size": "36"})
+
+
+def test_size_with_two_options_prefers_in_stock():
+    data = {
+        "options": [{"name": "Waist"}, {"name": "Length"}],
+        "variants": [
+            {"id": 1, "option1": "32", "option2": "Regular", "price": 9000, "available": False},
+            {"id": 2, "option1": "32", "option2": "Long", "price": 9500, "available": True},
+            {"id": 3, "option1": "30", "option2": "32", "price": 5000, "available": True},
+        ],
+    }
+    product = {"url": JEAN_URL, "size": "32", "size_option": "Waist"}
+    assert pick_shopify_variant(data, product) == (95.0, True)
+
+
+def test_back_in_stock_notifies():
+    product = dict(PRODUCT, size="32")
+    message, entry = evaluate(product, 100.0, {"price": 100.0, "available": False}, True)
+    assert message == "Shoe (size 32) is back in stock at $100."
+    assert entry["available"] is True
+
+
+def test_drop_while_sold_out_says_so():
+    message, _ = evaluate(PRODUCT, 80.0, {"price": 100.0, "available": False}, False)
+    assert message.endswith("Currently sold out in your size.")

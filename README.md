@@ -7,7 +7,8 @@ Checks product prices every 30 minutes on GitHub Actions and sends a push notifi
 1. `check.py` downloads each page listed in `products.json` and reads the price from the page's structured product data, price meta tags, or common store layouts (Amazon, Flipkart, WooCommerce shops).
 2. The last seen price is saved in `state.json`, which the workflow commits back to the repo.
 3. When the price is lower than the last check, or at or below your `target_price`, it sends a notification through [ntfy](https://ntfy.sh). Tapping it opens the product page.
-4. If a price cannot be read 3 times in a row, you get one warning so the checker never breaks silently.
+4. On Shopify stores (like cottonon.ae) it can follow one size. It reads the store's product feed, so it tracks the exact price and stock of that size, and also alerts you when your size comes back in stock.
+5. If a price cannot be read 3 times in a row, you get one warning so the checker never breaks silently.
 
 ## Setup
 
@@ -27,7 +28,7 @@ Checks product prices every 30 minutes on GitHub Actions and sends a push notifi
     "url": "https://www.example.com/product/123",
     "currency": "$",
     "target_price": 80,
-    "selector": null
+    "size": "32"
   }
 ]
 ```
@@ -38,6 +39,8 @@ Checks product prices every 30 minutes on GitHub Actions and sends a push notifi
 | `name` | no | Label used in notifications |
 | `currency` | no | Symbol shown in notifications |
 | `target_price` | no | Also alert when the price is at or below this, even on the first check |
+| `size` | no | Shopify stores only: the size to follow, for example `"32"`. Any size in the link is ignored |
+| `size_option` | no | Shopify stores only: option name to match the size against (for example `"Waist"`) when a product has two options that share values |
 | `selector` | no | CSS selector for the price element, for sites the automatic detection misses |
 
 Add more objects to the list to track several products.

@@ -7,6 +7,7 @@ import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import parse_qs, urlsplit
 
 import requests
 from bs4 import BeautifulSoup
@@ -135,10 +136,77 @@ def extract_price(html, selector=None):
     return None
 
 
+class SizeNotFound(ValueError):
+    pass
+
+
+def shopify_feed_url(url):
+    """Shopify stores publish every product as JSON at /products/<handle>.js."""
+    parts = urlsplit(url)
+    match = re.search(r"/products/([^/?#]+)", parts.path)
+    if not match:
+        return None
+    return f"{parts.scheme}://{parts.netloc}/products/{match.group(1)}.js"
+
+
+def pick_shopify_variant(data, product):
+    """Choose the variant to track. Returns (price, available)."""
+    variants = data.get("variants") or []
+    if not variants:
+        raise ValueError("product has no variants")
+
+    size = product.get("size")
+    if size is not None:
+        wanted = str(size).strip().lower()
+        option_names = [
+            (o.get("name") if isinstance(o, dict) else o) or "" for o in data.get("options") or []
+        ]
+        positions = range(1, 4)
+        if product.get("size_option"):
+            name = product["size_option"].strip().lower()
+            positions = [i + 1 for i, n in enumerate(option_names) if n.strip().lower() == name]
+            if not positions:
+                raise SizeNotFound(
+                    f"no option called {product['size_option']!r}, options are {option_names}"
+                )
+        matches = [
+            v
+            for v in variants
+            if any(str(v.get(f"option{i}") or "").strip().lower() == wanted for i in positions)
+        ]
+        if not matches:
+            sizes = sorted({str(v.get("title")) for v in variants})
+            raise SizeNotFound(f"size {size} not listed, sizes on the page are {sizes}")
+    else:
+        variant_id = parse_qs(urlsplit(product["url"]).query).get("variant", [None])[0]
+        matches = [v for v in variants if str(v.get("id")) == variant_id] or variants
+
+    # When several variants fit (for example 32 Regular and 32 Long), track
+    # the cheapest one that can be bought, or the cheapest overall if none can.
+    in_stock = [v for v in matches if v.get("available")]
+    best = min(in_stock or matches, key=lambda v: v["price"])
+    # The .js feed gives prices in the smallest currency unit (fils, cents).
+    return best["price"] / 100, bool(in_stock)
+
+
 def fetch_price(product):
+    """Returns (price, available). available is None when the page does not say."""
+    feed = shopify_feed_url(product["url"])
+    if feed and not product.get("selector"):
+        response = requests.get(feed, headers=HEADERS, timeout=30)
+        if response.ok:
+            try:
+                data = response.json()
+            except ValueError:
+                data = None
+            if isinstance(data, dict) and "variants" in data:
+                return pick_shopify_variant(data, product)
+    if product.get("size") is not None:
+        raise ValueError("size tracking only works on Shopify stores")
+
     response = requests.get(product["url"], headers=HEADERS, timeout=30)
     response.raise_for_status()
-    return extract_price(response.text, product.get("selector"))
+    return extract_price(response.text, product.get("selector")), None
 
 
 def notify(title, message, url=None, priority="high"):
@@ -161,12 +229,14 @@ def format_price(value, currency):
     return f"{currency}{amount}" if currency else amount
 
 
-def evaluate(product, price, entry):
+def evaluate(product, price, entry, available=None):
     """Decide whether a newly seen price deserves a notification.
 
     Returns (message or None, updated state entry).
     """
     name = product.get("name") or product["url"]
+    if product.get("size") is not None:
+        name = f"{name} (size {product['size']})"
     currency = product.get("currency", "")
     target = product.get("target_price")
     previous = entry.get("price")
@@ -187,10 +257,18 @@ def evaluate(product, price, entry):
     if message and lowest is not None and price < lowest:
         message += " Lowest price seen so far."
 
+    if available is False and message:
+        message += " Currently sold out in your size."
+    elif available and entry.get("available") is False:
+        back = f"{name} is back in stock at {format_price(price, currency)}."
+        message = f"{back} {message}" if message else back
+
     updated = dict(entry)
     updated["price"] = price
     updated["lowest"] = price if lowest is None else min(lowest, price)
     updated["failures"] = 0
+    if available is not None:
+        updated["available"] = available
     updated["last_change"] = (
         datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
         if price != previous
@@ -223,7 +301,7 @@ def run(test_notification=False):
         name = product.get("name") or url
         entry = state.get(url, {})
         try:
-            price = fetch_price(product)
+            price, available = fetch_price(product)
             if price is None:
                 raise ValueError("price not found on the page")
         except Exception as exc:  # noqa: BLE001  one bad product must not stop the rest
@@ -240,11 +318,14 @@ def run(test_notification=False):
                 )
             continue
 
-        message, state[url] = evaluate(product, price, entry)
-        print(f"OK      {name}: {format_price(price, product.get('currency', ''))}")
+        back_in_stock = bool(available) and entry.get("available") is False
+        message, state[url] = evaluate(product, price, entry, available)
+        stock = {True: "", False: " (sold out)", None: ""}[available]
+        print(f"OK      {name}: {format_price(price, product.get('currency', ''))}{stock}")
         if message:
             print(f"NOTIFY  {message}")
-            notify("Price drop", message, url=url)
+            title = "Back in stock" if back_in_stock else "Price drop"
+            notify(title, message, url=url)
 
     STATE_FILE.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return 0
