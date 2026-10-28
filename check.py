@@ -342,8 +342,13 @@ def run(test_notification=False):
         print(f"OK      {name}{label}: {shown}")
         if message:
             print(f"NOTIFY  {message}")
-            title = "Back in stock" if back_in_stock else "Price drop"
-            notify(title, message, url=url)
+            target = product.get("target_price")
+            if target is not None and price <= target:
+                # Urgent is the loudest ntfy level, so a target hit stands out.
+                notify("Target price hit", message, url=url, priority="urgent")
+            else:
+                title = "Back in stock" if back_in_stock else "Price drop"
+                notify(title, message, url=url)
 
     STATE_FILE.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return 0
