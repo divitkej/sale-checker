@@ -202,6 +202,40 @@ def shopify_buy_url(url, variant_id):
     return f"{parts.scheme}://{parts.netloc}/cart/{variant_id}:1"
 
 
+def shopify_cart_price(url, variant_id):
+    """Price after automatic discounts, read from a throwaway cart.
+
+    Adds one item to a fresh anonymous cart, which is how the store works out
+    discounts that only show at checkout. Nothing is ordered and the cart is
+    discarded. Returns (price, discount titles).
+    """
+    parts = urlsplit(url)
+    origin = f"{parts.scheme}://{parts.netloc}"
+    with requests.Session() as session:
+        session.headers.update(HEADERS)
+        session.post(
+            f"{origin}/cart/add.js",
+            json={"items": [{"id": variant_id, "quantity": 1}]},
+            timeout=30,
+        ).raise_for_status()
+        response = session.get(f"{origin}/cart.js", timeout=30)
+        response.raise_for_status()
+        cart = response.json()
+    titles = [
+        d.get("title") or d.get("description") or ""
+        for d in cart.get("cart_level_discount_applications") or []
+    ]
+    for item in cart.get("items") or []:
+        titles += [d.get("discount_application", {}).get("title") or d.get("title") or ""
+                   for d in item.get("line_level_discount_allocations") or []]
+    print(
+        f"CART    {url} original {cart.get('original_total_price')} "
+        f"total {cart.get('total_price')} discount {cart.get('total_discount')} "
+        f"titles {[t for t in titles if t]}"
+    )
+    return cart["total_price"] / 100, [t for t in titles if t]
+
+
 def fetch_price(product):
     """Returns (price, available, variant, buy_url).
 
@@ -223,6 +257,13 @@ def fetch_price(product):
                     if available and variant_id
                     else None
                 )
+                if buy_url:
+                    try:
+                        cart_price, _ = shopify_cart_price(product["url"], variant_id)
+                        price = min(price, cart_price)
+                    except (requests.RequestException, ValueError, KeyError) as exc:
+                        # Fall back to the listed price rather than failing the check.
+                        print(f"Cart price unavailable for {product['url']}: {exc}")
                 return price, available, variant, buy_url
     if product.get("size") is not None:
         raise ValueError("size tracking only works on Shopify stores")
