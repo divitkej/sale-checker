@@ -94,11 +94,21 @@ def test_drop_notifies():
     assert entry["lowest"] == 80.0
 
 
-def test_rise_is_silent():
-    message, entry = evaluate(PRODUCT, 120.0, {"price": 100.0, "lowest": 100.0})
+def test_rise_notifies():
+    message, entry = evaluate(PRODUCT, 319.0, {"price": 223.3, "lowest": 223.3})
+    assert message == "Shoe went back up from $223.30 to $319. The lower price has ended."
+    assert entry["price"] == 319.0
+    assert entry["lowest"] == 223.3
+
+
+def test_same_price_is_silent():
+    message, _ = evaluate(PRODUCT, 319.0, {"price": 319.0, "lowest": 223.3})
     assert message is None
-    assert entry["price"] == 120.0
-    assert entry["lowest"] == 100.0
+
+
+def test_sold_out_is_not_a_rise():
+    message, _ = evaluate(PRODUCT, 400.0, {"price": 319.0}, False)
+    assert message is None
 
 
 def test_target_notifies_once():

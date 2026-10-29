@@ -329,6 +329,11 @@ def evaluate(product, price, entry, available=None, variant=None):
             f"{name} dropped from {format_price(previous, currency)} "
             f"to {format_price(price, currency)}."
         )
+    elif previous is not None and price > previous:
+        message = (
+            f"{name} went back up from {format_price(previous, currency)} "
+            f"to {format_price(price, currency)}. The lower price has ended."
+        )
     elif target is not None and price <= target and entry.get("notified_price") != price:
         message = (
             f"{name} is {format_price(price, currency)}, at or below your "
@@ -425,6 +430,11 @@ def run(test_notification=False):
             continue
 
         back_in_stock = bool(available) and entry.get("available") is False
+        went_up = (
+            available is not False
+            and entry.get("price") is not None
+            and price > entry["price"]
+        )
         message, state[url] = evaluate(product, price, entry, available, variant)
         label = f" [{variant}]" if variant else ""
         shown = "sold out" if available is False else format_price(price, product.get("currency", ""))
@@ -434,7 +444,9 @@ def run(test_notification=False):
         if message:
             print(f"NOTIFY  {message}")
             target = product.get("target_price")
-            if target is not None and price <= target:
+            if went_up and not back_in_stock:
+                notify("Price went up", message, url=url, priority="default")
+            elif target is not None and price <= target:
                 # Urgent is the loudest ntfy level, so a target hit stands out.
                 notify("Target price hit", message, url=url, priority="urgent", buy_url=buy_url)
             else:
