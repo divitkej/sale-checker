@@ -1,13 +1,15 @@
 """Check product prices and send a phone notification through ntfy when one drops."""
 
 import argparse
+import html
 import json
 import os
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
+from zoneinfo import ZoneInfo
 
 import requests
 from bs4 import BeautifulSoup
@@ -15,6 +17,20 @@ from bs4 import BeautifulSoup
 ROOT = Path(__file__).parent
 PRODUCTS_FILE = ROOT / "products.json"
 STATE_FILE = ROOT / "state.json"
+
+# Sale end times are shown in the shopper's local time.
+LOCAL_TZ = ZoneInfo("Asia/Dubai")
+LOCAL_TZ_NAME = "Dubai time"
+
+# Send a "sale ending soon" reminder when this many hours are left.
+REMINDER_HOURS = (24, 6, 1)
+
+# Promotion schedules some Shopify themes embed in the page, for example
+# "title": "30% OFF", "badgeText": null, "startsAt": "...", "endsAt": "...".
+OFFER_RE = re.compile(
+    r'"title":\s*"(?P<title>[^"]+)",\s*"badgeText":\s*(?:null|"[^"]*"),\s*'
+    r'"startsAt":\s*"[^"]*",\s*"endsAt":\s*(?:null|"(?P<end>[^"]+)")'
+)
 
 # After this many failed checks in a row, send one warning so a broken
 # checker never fails silently.
@@ -236,11 +252,75 @@ def shopify_cart_price(url, variant_id):
     return cart["total_price"] / 100, [t for t in titles if t]
 
 
+def parse_offer_end_times(page_html):
+    """Map promotion titles to their published end time (UTC datetimes)."""
+    ends = {}
+    for match in OFFER_RE.finditer(html.unescape(page_html)):
+        if match["end"]:
+            end = datetime.fromisoformat(match["end"].replace("Z", "+00:00"))
+            ends.setdefault(match["title"], end)
+    return ends
+
+
+_offer_cache = {}
+
+
+def shopify_offer_end_times(url):
+    """Published promotion end times for a store, fetched once per run."""
+    parts = urlsplit(url)
+    origin = f"{parts.scheme}://{parts.netloc}"
+    if origin not in _offer_cache:
+        try:
+            response = requests.get(f"{origin}/", headers=HEADERS, timeout=30)
+            response.raise_for_status()
+            _offer_cache[origin] = parse_offer_end_times(response.text)
+        except requests.RequestException as exc:
+            print(f"Could not read promotion end times from {origin}: {exc}")
+            _offer_cache[origin] = {}
+    return _offer_cache[origin]
+
+
+def format_remaining(remaining):
+    """'2 days 3 hours', '5 hours 40 minutes' or '35 minutes'."""
+    minutes = max(0, int(remaining.total_seconds() // 60))
+    days, minutes = divmod(minutes, 24 * 60)
+    hours, minutes = divmod(minutes, 60)
+
+    def unit(n, word):
+        return f"{n} {word}{'' if n == 1 else 's'}"
+
+    if days:
+        return f"{unit(days, 'day')} {unit(hours, 'hour')}" if hours else unit(days, "day")
+    if hours:
+        return f"{unit(hours, 'hour')} {unit(minutes, 'minute')}" if minutes else unit(hours, "hour")
+    return unit(minutes, "minute")
+
+
+def format_local(when):
+    local = when.astimezone(LOCAL_TZ)
+    return f"{local:%a %d %b}, {local:%I:%M %p}".replace(", 0", ", ") + f" {LOCAL_TZ_NAME}"
+
+
+def due_reminder(remaining, already_sent):
+    """The reminder threshold (in hours) to send now, or None.
+
+    Only the closest threshold is sent, so a sale first seen with 30 minutes
+    left gives one reminder rather than three.
+    """
+    if remaining <= timedelta(0):
+        return None
+    crossed = [h for h in REMINDER_HOURS if remaining <= timedelta(hours=h)]
+    if not crossed or min(crossed) in already_sent:
+        return None
+    return min(crossed)
+
+
 def fetch_price(product):
-    """Returns (price, available, variant, buy_url).
+    """Returns (price, available, variant, buy_url, sale_ends).
 
     available is None when the page does not say. buy_url is only set for
-    Shopify variants that are in stock.
+    Shopify variants that are in stock. sale_ends is the published end time
+    of the discount applied at checkout, when the store publishes one.
     """
     feed = shopify_feed_url(product["url"])
     if feed and not product.get("selector"):
@@ -257,20 +337,25 @@ def fetch_price(product):
                     if available and variant_id
                     else None
                 )
+                sale_ends = None
                 if buy_url:
                     try:
-                        cart_price, _ = shopify_cart_price(product["url"], variant_id)
-                        price = min(price, cart_price)
+                        cart_price, titles = shopify_cart_price(product["url"], variant_id)
+                        if cart_price < price:
+                            price = cart_price
+                            ends = shopify_offer_end_times(product["url"])
+                            known = [ends[t] for t in titles if t in ends]
+                            sale_ends = min(known) if known else None
                     except (requests.RequestException, ValueError, KeyError) as exc:
                         # Fall back to the listed price rather than failing the check.
                         print(f"Cart price unavailable for {product['url']}: {exc}")
-                return price, available, variant, buy_url
+                return price, available, variant, buy_url, sale_ends
     if product.get("size") is not None:
         raise ValueError("size tracking only works on Shopify stores")
 
     response = requests.get(product["url"], headers=HEADERS, timeout=30)
     response.raise_for_status()
-    return extract_price(response.text, product.get("selector")), None, None, None
+    return extract_price(response.text, product.get("selector")), None, None, None, None
 
 
 def notify(title, message, url=None, priority="high", buy_url=None):
@@ -373,7 +458,7 @@ def send_test_notification():
     """Send a test alert with a working Buy now button for the first jean in stock."""
     for product in load_json(PRODUCTS_FILE, []):
         try:
-            price, _, variant, buy_url = fetch_price(product)
+            price, _, variant, buy_url, _ = fetch_price(product)
         except Exception as exc:  # noqa: BLE001
             print(f"Skipping {product.get('name')}: {exc}")
             continue
@@ -411,7 +496,7 @@ def run(test_notification=False):
         name = product.get("name") or url
         entry = state.get(url, {})
         try:
-            price, available, variant, buy_url = fetch_price(product)
+            price, available, variant, buy_url, sale_ends = fetch_price(product)
             if price is None:
                 raise ValueError("price not found on the page")
         except Exception as exc:  # noqa: BLE001  one bad product must not stop the rest
@@ -441,6 +526,34 @@ def run(test_notification=False):
         print(f"OK      {name}{label}: {shown}")
         size = f" {variant.split(' / ')[-1]}" if variant else ""
         summary.append(f"{name}{size}: {shown}")
+
+        # Count down to the published end of the discount applied at checkout.
+        if available is not False:
+            ends_iso = sale_ends.isoformat() if sale_ends else None
+            if state[url].get("sale_ends") != ends_iso:
+                state[url]["sale_ends"] = ends_iso
+                state[url]["reminders_sent"] = []
+        if sale_ends and available:
+            remaining = sale_ends - datetime.now(timezone.utc)
+            due = due_reminder(remaining, state[url].get("reminders_sent", []))
+            if due is not None:
+                state[url]["reminders_sent"] = [
+                    h for h in REMINDER_HOURS if remaining <= timedelta(hours=h)
+                ]
+            if message:
+                message += (
+                    f" Sale price ends in {format_remaining(remaining)} "
+                    f"({format_local(sale_ends)}) at the latest."
+                )
+            elif due is not None:
+                reminder = (
+                    f"{name} ({variant.split(' / ')[-1]}) is {shown} until "
+                    f"{format_local(sale_ends)}. "
+                    f"{format_remaining(remaining)} left. The store can end it sooner."
+                )
+                print(f"NOTIFY  {reminder}")
+                notify("Sale ending soon", reminder, url=url, buy_url=buy_url)
+
         if message:
             print(f"NOTIFY  {message}")
             target = product.get("target_price")

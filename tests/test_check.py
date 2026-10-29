@@ -1,4 +1,5 @@
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -7,9 +8,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from check import (  # noqa: E402
     SizeNotFound,
+    due_reminder,
     evaluate,
     extract_price,
+    format_local,
     format_price,
+    format_remaining,
+    parse_offer_end_times,
     parse_price,
     pick_shopify_variant,
     shopify_buy_url,
@@ -260,3 +265,52 @@ def test_buy_url_is_cart_link():
 )
 def test_format_price(value, expected):
     assert format_price(value, "AED ") == expected
+
+
+# Escaped the way cottonon.ae embeds its promotion schedule in the page.
+OFFERS_HTML = (
+    "&quot;title&quot;: &quot;30% OFF&quot;, &quot;badgeText&quot;: null, "
+    "&quot;startsAt&quot;: &quot;2026-10-16T06:00:00.000Z&quot;, "
+    "&quot;endsAt&quot;: &quot;2026-10-31T11:24:00.000Z&quot;, &quot;method&quot;: &quot;automatic&quot;"
+    " ... &quot;title&quot;: &quot;SURA20&quot;, &quot;badgeText&quot;: null, "
+    "&quot;startsAt&quot;: &quot;2026-04-17T05:16:31.675Z&quot;, &quot;endsAt&quot;: null"
+)
+
+
+def test_parse_offer_end_times():
+    ends = parse_offer_end_times(OFFERS_HTML)
+    assert ends == {"30% OFF": datetime(2026, 10, 31, 11, 24, tzinfo=timezone.utc)}
+
+
+def test_format_local_is_dubai_time():
+    when = datetime(2026, 10, 31, 11, 24, tzinfo=timezone.utc)
+    assert format_local(when) == "Sat 31 Oct, 3:24 PM Dubai time"
+
+
+@pytest.mark.parametrize(
+    "remaining, expected",
+    [
+        (timedelta(days=2, hours=3, minutes=10), "2 days 3 hours"),
+        (timedelta(days=1), "1 day"),
+        (timedelta(hours=5, minutes=40), "5 hours 40 minutes"),
+        (timedelta(hours=1), "1 hour"),
+        (timedelta(minutes=35), "35 minutes"),
+        (timedelta(minutes=1), "1 minute"),
+    ],
+)
+def test_format_remaining(remaining, expected):
+    assert format_remaining(remaining) == expected
+
+
+def test_due_reminder_steps():
+    assert due_reminder(timedelta(hours=30), []) is None
+    assert due_reminder(timedelta(hours=20), []) == 24
+    assert due_reminder(timedelta(hours=20), [24]) is None
+    assert due_reminder(timedelta(hours=5), [24]) == 6
+    assert due_reminder(timedelta(minutes=30), [24, 6]) == 1
+    assert due_reminder(timedelta(minutes=30), [24, 6, 1]) is None
+    assert due_reminder(timedelta(0), []) is None
+
+
+def test_due_reminder_sends_only_closest():
+    assert due_reminder(timedelta(minutes=30), []) == 1
