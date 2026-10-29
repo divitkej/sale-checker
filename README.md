@@ -6,7 +6,7 @@ Checks product prices every 30 minutes on GitHub Actions and sends a push notifi
 
 1. `check.py` downloads each page listed in `products.json` and reads the price from the page's structured product data, price meta tags, or common store layouts (Amazon, Flipkart, WooCommerce shops).
 2. The last seen price is saved in `state.json`, which the workflow commits back to the repo.
-3. When the price is lower than the last check, or at or below your `target_price`, it sends a notification. It also sends a quieter "Price went up" alert when a price rises again, for example when a sale ends through [ntfy](https://ntfy.sh). Tapping it opens the product page. On Shopify stores the alert also has a **Buy now** button that opens checkout with your size already in the cart; you still confirm the payment yourself.
+3. When the price is lower than the last check, or at or below your `target_price`, it sends a notification through [ntfy](https://ntfy.sh). Tapping it opens the product page. A quieter "Price went up" alert tells you when a price rises again, for example when a sale ends. On Shopify stores the alert also has a **Buy now** button that opens checkout with your size already in the cart; you still confirm the payment yourself.
 4. On Shopify stores (like cottonon.ae) it can follow one size. It reads the store's product feed, so it tracks the exact price and stock of that size, and also alerts you when your size comes back in stock.
 5. If a price cannot be read 3 times in a row, you get one warning so the checker never breaks silently.
 
