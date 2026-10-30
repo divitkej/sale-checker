@@ -26,10 +26,8 @@ def show(pattern, width=260, limit=30):
             break
         print("  ..", js[max(0, m.start() - width): m.end() + width].replace("\n", " "))
 
-show(r"apiFactory\s*=|factory\(\s*\"apiFactory\"|\"apiFactory\",", 600, 5)
-show(r"\$http\.(get|post)\(", 200, 25)
-show(r"\"/?(?:ibe|tc|ihotelier|api|v\d)/[^\"]{2,80}\"", 120, 40)
-show(r"availability|Availability", 150, 15)
-print("\n### all quoted paths with slashes")
-paths = sorted(set(re.findall(r'"(/[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-{}.]*)+)"', js)))
-print(paths[:200])
+show(r'factory\("apiFactory"', 2500, 2)
+show(r'"/chain/"', 300, 6)
+show(r'"/hotel/"', 300, 6)
+show(r'"/specialcodes/"', 300, 3)
+show(r'baseUrl|apiUrl|API_URL|serviceUrl|apiBase|BASE_URL|urlPrefix', 200, 15)
