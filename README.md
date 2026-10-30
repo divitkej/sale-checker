@@ -67,5 +67,5 @@ python -m pytest tests               # run tests (needs pytest)
 - One notification per run lists every change: a cheaper night, a price rise, a hotel newly offering the rate, or a hotel no longer offering it.
 - If the promo code stops being accepted, you get one warning.
 - Prices are the site's room rates before service charge and fees.
-- Alerts go to a separate ntfy topic, set as the `NTFY_TOPIC_HOTELS` secret.
+- Alerts go to a separate ntfy topic, set as the `NTFY_TOPIC_HOTELS` secret. Until that secret exists they go to the main `NTFY_TOPIC`.
 - The `Check hotels` workflow runs every hour. To make that reliable, add a cron-job.org job that POSTs to `https://api.github.com/repos/divitkej/sale-checker/actions/workflows/check-hotels.yml/dispatches` every hour with the body `{"ref":"master"}`.

@@ -29,6 +29,7 @@ jobs:
       - name: Check hotels
         env:
           NTFY_TOPIC_HOTELS: ${{ secrets.NTFY_TOPIC_HOTELS }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
         run: python hotels.py
 
       - name: Save hotel prices

@@ -139,10 +139,15 @@ def cheapest(state_nights, currency, limit=5):
     ]
 
 
+def alert_topic():
+    """The hotel topic, or the main topic until a separate one is set up."""
+    return os.environ.get("NTFY_TOPIC_HOTELS") or os.environ.get("NTFY_TOPIC")
+
+
 def notify(title, message, priority="default", click=None):
-    topic = os.environ.get("NTFY_TOPIC_HOTELS")
+    topic = alert_topic()
     if not topic:
-        print(f"[no NTFY_TOPIC_HOTELS set] {title}\n{message}")
+        print(f"[no ntfy topic set] {title}\n{message}")
         return
     server = os.environ.get("NTFY_SERVER", "https://ntfy.sh").rstrip("/")
     headers = {"Title": title.encode("utf-8"), "Priority": priority}
@@ -257,12 +262,15 @@ def run():
         meta["code_ok"] = True
 
     if not os.environ.get("NTFY_TOPIC_HOTELS"):
-        print("WARNING NTFY_TOPIC_HOTELS secret is not set, so no hotel alerts can be sent")
+        if os.environ.get("NTFY_TOPIC"):
+            print("NOTE    NTFY_TOPIC_HOTELS is not set, so hotel alerts go to the main NTFY_TOPIC")
+        else:
+            print("WARNING no ntfy topic is set, so no hotel alerts can be sent")
 
     # The welcome summary waits until the phone topic is set up, so it is not lost.
     if changes and not meta.get("started_sent"):
         print(f"(holding {len(changes)} changes until the welcome summary is sent)")
-    if not meta.get("started_sent") and new_nights and os.environ.get("NTFY_TOPIC_HOTELS"):
+    if not meta.get("started_sent") and new_nights and alert_topic():
         lines = cheapest(new_nights, currency)
         notify(
             "Rove 36-hour tracking started",
