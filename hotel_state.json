@@ -1,7 +1,8 @@
 {
   "meta": {
     "code_ok": true,
-    "failures": 0
+    "failures": 0,
+    "started_sent": true
   },
   "nights": {
     "2026-10-31": {
