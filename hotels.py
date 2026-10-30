@@ -295,4 +295,9 @@ def run():
 
 
 if __name__ == "__main__":
+    if "--test-notification" in sys.argv:
+        which = "hotel topic" if os.environ.get("NTFY_TOPIC_HOTELS") else "main topic"
+        print(f"Sending a test to the {which}")
+        notify("Rove alerts test", f"Test notification. Hotel alerts reach your phone through the {which}.")
+        sys.exit(0)
     sys.exit(run())

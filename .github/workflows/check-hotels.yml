@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "23 * * * *"
   workflow_dispatch:
+    inputs:
+      test_notification:
+        description: "Send a test notification instead of checking hotels"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -26,13 +31,22 @@ jobs:
 
       - run: pip install -r requirements.txt playwright==1.48.0 && python -m playwright install --with-deps chromium
 
+      - name: Send test notification
+        if: ${{ inputs.test_notification }}
+        env:
+          NTFY_TOPIC_HOTELS: ${{ secrets.NTFY_TOPIC_HOTELS }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python hotels.py --test-notification
+
       - name: Check hotels
+        if: ${{ !inputs.test_notification }}
         env:
           NTFY_TOPIC_HOTELS: ${{ secrets.NTFY_TOPIC_HOTELS }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
         run: python hotels.py
 
       - name: Save hotel prices
+        if: ${{ !inputs.test_notification }}
         run: |
           if [ -n "$(git status --porcelain hotel_state.json)" ]; then
             git config user.name "github-actions[bot]"
