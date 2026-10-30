@@ -206,7 +206,6 @@ def run():
     state = load_json(STATE_FILE, {"nights": {}, "meta": {}})
     meta = state.setdefault("meta", {})
     old_nights = state.get("nights", {})
-    first_run = not old_nights
     new_nights, changes, failed, code_results = {}, [], [], []
 
     with sync_playwright() as p:
@@ -257,7 +256,10 @@ def run():
             notify(f"{config['promo_code']} code works again", "Rove accepts the code again.")
         meta["code_ok"] = True
 
-    if first_run and new_nights:
+    # The welcome summary waits until the phone topic is set up, so it is not lost.
+    if changes and not meta.get("started_sent"):
+        print(f"(holding {len(changes)} changes until the welcome summary is sent)")
+    if not meta.get("started_sent") and new_nights and os.environ.get("NTFY_TOPIC_HOTELS"):
         lines = cheapest(new_nights, currency)
         notify(
             "Rove 36-hour tracking started",
@@ -265,7 +267,8 @@ def run():
             "service charge and fees. Cheapest right now:\n" + "\n".join(lines or ["no rates yet"]),
             click=config.get("offer_url"),
         )
-    elif changes:
+        meta["started_sent"] = True
+    elif changes and meta.get("started_sent"):
         title, body, priority = digest(changes, currency)
         print(f"NOTIFY  {title}\n{body}")
         click = (

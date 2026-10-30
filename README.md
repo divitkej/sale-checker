@@ -59,3 +59,13 @@ python -m pytest tests               # run tests (needs pytest)
 - Some large stores (Amazon especially) sometimes block requests from GitHub's servers. If you get the "needs attention" warning, the site is blocking the checker rather than the price being missing.
 - GitHub can delay scheduled runs by a few minutes at busy times.
 - GitHub pauses scheduled workflows in repos with no activity for 60 days. Price change commits count as activity; if the price never changes, re-enable the workflow from the Actions tab when GitHub emails you.
+
+## Rove Hotels 36-hour rates
+
+`hotels.py` checks every Rove hotel for each night from today until the end date in `hotels.json`, with the promo code applied. The booking site only loads rates in a browser, so the check opens each search in a headless Chromium and reads the rates the page itself receives.
+
+- One notification per run lists every change: a cheaper night, a price rise, a hotel newly offering the rate, or a hotel no longer offering it.
+- If the promo code stops being accepted, you get one warning.
+- Prices are the site's room rates before service charge and fees.
+- Alerts go to a separate ntfy topic, set as the `NTFY_TOPIC_HOTELS` secret.
+- The `Check hotels` workflow runs every hour. To make that reliable, add a second cron-job.org job like the one above, pointed at `check-hotels.yml` with the body `{"ref":"master"}`.
