@@ -256,6 +256,9 @@ def run():
             notify(f"{config['promo_code']} code works again", "Rove accepts the code again.")
         meta["code_ok"] = True
 
+    if not os.environ.get("NTFY_TOPIC_HOTELS"):
+        print("WARNING NTFY_TOPIC_HOTELS secret is not set, so no hotel alerts can be sent")
+
     # The welcome summary waits until the phone topic is set up, so it is not lost.
     if changes and not meta.get("started_sent"):
         print(f"(holding {len(changes)} changes until the welcome summary is sent)")
