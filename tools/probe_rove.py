@@ -23,17 +23,18 @@ with sync_playwright() as p:
     page.on("response", grab)
     page.goto(URL, wait_until="domcontentloaded", timeout=60000)
     page.wait_for_timeout(30000)
+    print("\n=== price APIs")
+    for status, url, body in apis:
+        host = url.split("/")[2]
+        if not re.search(r"galaxy\.tf|api\.travelclick\.com", host) or "exchange-rates" in url:
+            continue
+        print(status, url[:220], len(body))
+        for m in re.finditer(r'"[^"]*(?:[Tt]ax|[Ff]ee|[Tt]otal|[Cc]harge|[Pp]rice|[Aa]mount)[^"]*"\s*:\s*("[^"]{0,80}"|[^,}\]]{0,30})', body):
+            print("     ", m.group(0)[:160])
     text = page.inner_text("body")
     print("=== page lines with prices or charges")
     for line in text.splitlines():
         line = line.strip()
         if line and re.search(r"AED|tax|fee|charge|vat|dirham|total|night|stay", line, re.I):
             print("  |", line[:200])
-    print("\n=== price APIs")
-    for status, url, body in apis:
-        if not re.search(r"galaxy\.tf|travelclick\.com|rovehotels\.com", url) or "exchange-rates" in url:
-            continue
-        print(status, url[:220], len(body))
-        for m in re.finditer(r'"[^"]*(?:[Tt]ax|[Ff]ee|[Tt]otal|[Cc]harge|[Pp]rice|[Aa]mount)[^"]*"\s*:\s*("[^"]{0,80}"|[^,}\]]{0,30})', body):
-            print("     ", m.group(0)[:160])
     browser.close()
