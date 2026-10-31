@@ -147,8 +147,8 @@
       },
       "111997": {
         "name": "Rove La Mer Beach",
-        "price": null,
-        "was": null
+        "price": 559.0,
+        "was": 698.75
       },
       "114050": {
         "name": "Rove City Walk",
@@ -511,8 +511,8 @@
       },
       "111997": {
         "name": "Rove La Mer Beach",
-        "price": 549.0,
-        "was": 686.25
+        "price": 539.0,
+        "was": 673.75
       },
       "114050": {
         "name": "Rove City Walk",
@@ -689,8 +689,8 @@
       },
       "106965": {
         "name": "Rove Bur Dubai - Healthcare City",
-        "price": 277.0,
-        "was": 346.25
+        "price": 251.0,
+        "was": 313.75
       },
       "106967": {
         "name": "Rove City Centre, Deira",
@@ -949,8 +949,8 @@
       },
       "106965": {
         "name": "Rove Bur Dubai - Healthcare City",
-        "price": 307.0,
-        "was": 383.75
+        "price": 281.0,
+        "was": 351.25
       },
       "106967": {
         "name": "Rove City Centre, Deira",
