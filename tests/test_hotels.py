@@ -6,6 +6,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from hotels import (  # noqa: E402
     cheapest,
+    short_dates,
+    stay,
     diff_night,
     digest,
     nights,
@@ -90,12 +92,13 @@ def test_digest_lists_drops_first_and_counts():
         {"night": "2026-11-09", "hotel": "Rove La Mer", "kind": "removed", "old": 410.0, "new": None},
     ]
     title, body, priority = digest(changes, "AED ")
-    assert title == "Rove prices changed: 1 cheaper or new, 2 up or gone"
+    assert title == "Rove 1 cheaper or new, 2 up or gone: 7 Nov, 8 Nov, 9 Nov"
     assert priority == "high"
     assert body.splitlines() == [
-        "Sun 08 Nov, Rove Downtown: AED 389 to AED 349 (down AED 40)",
-        "Sat 07 Nov, Rove Marina: AED 300 to AED 330 (up AED 30)",
-        "Mon 09 Nov, Rove La Mer: no longer available (was AED 410)",
+        "Sun 8 to Mon 9 Nov, Rove Downtown: AED 389 to AED 349 (down AED 40)",
+        "Sat 7 to Sun 8 Nov, Rove Marina: AED 300 to AED 330 (up AED 30)",
+        "Mon 9 to Tue 10 Nov, Rove La Mer: no longer available (was AED 410)",
+        "Check in 9 AM, check out 9 PM the next day.",
     ]
 
 
@@ -108,13 +111,13 @@ def test_digest_caps_length():
     changes = [{"night": "2026-11-07", "hotel": f"H{i:02}", "kind": "drop", "old": 300.0, "new": 299.0}
                for i in range(40)]
     lines = digest(changes, "AED ")[1].splitlines()
-    assert len(lines) == 26
-    assert lines[-1] == "and 15 more changes"
+    assert len(lines) == 27
+    assert lines[-2] == "and 15 more changes"
 
 
 def test_cheapest():
     state = {"2026-11-07": {"1": h("A", 319.2), "2": h("B", None)}, "2026-11-08": {"1": h("A", 299)}}
-    assert cheapest(state, "AED ") == ["Sun 08 Nov, A: AED 299", "Sat 07 Nov, A: AED 319.20"]
+    assert cheapest(state, "AED ") == ["Sun 8 to Mon 9 Nov, A: AED 299", "Sat 7 to Sun 8 Nov, A: AED 319.20"]
 
 
 def change(kind, old, new):
@@ -142,3 +145,13 @@ def test_budget_keeps_rises_and_removals_of_cheap_rates():
 
 def test_no_budget_keeps_everything():
     assert within_budget(change("hike", 405, 409), None)
+
+
+def test_stay_spans_two_days():
+    assert stay("2026-11-06") == "Fri 6 to Sat 7 Nov"
+    assert stay("2026-10-31") == "Sat 31 Oct to Sun 1 Nov"
+
+
+def test_short_dates_caps_the_title():
+    nights_ = ["2026-11-06", "2026-11-13", "2026-11-06", "2026-11-20", "2026-11-22", "2026-11-27"]
+    assert short_dates(nights_) == "6 Nov, 13 Nov, 20 Nov, 22 Nov +1 more"

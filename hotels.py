@@ -104,9 +104,29 @@ def money(value, currency):
     return f"{currency}{amount}"
 
 
+def day(d):
+    """'Fri 6 Nov'."""
+    return f"{d:%a} {d.day} {d:%b}"
+
+
+def stay(night):
+    """'Fri 6 to Sat 7 Nov', or 'Sat 31 Oct to Sun 1 Nov' across months."""
+    check_in = date.fromisoformat(night)
+    check_out = check_in + timedelta(days=1)
+    if check_in.month == check_out.month:
+        return f"{check_in:%a} {check_in.day} to {day(check_out)}"
+    return f"{day(check_in)} to {day(check_out)}"
+
+
+def short_dates(nights_, limit=4):
+    """'6 Nov, 13 Nov' style list of check-in dates for a title."""
+    days = sorted({date.fromisoformat(n) for n in nights_})
+    text = ", ".join(f"{d.day} {d:%b}" for d in days[:limit])
+    return text + (f" +{len(days) - limit} more" if len(days) > limit else "")
+
+
 def describe(change, currency):
-    night = date.fromisoformat(change["night"]).strftime("%a %d %b")
-    where = f"{night}, {change['hotel']}"
+    where = f"{stay(change['night'])}, {change['hotel']}"
     old, new = change["old"], change["new"]
     if change["kind"] == "added":
         return f"{where}: now available at {money(new, currency)}"
@@ -131,8 +151,9 @@ def digest(changes, currency):
         parts.append(f"{good} cheaper or new")
     if bad:
         parts.append(f"{bad} up or gone")
-    title = "Rove prices changed: " + ", ".join(parts)
+    title = f"Rove {', '.join(parts)}: {short_dates(c['night'] for c in changes)}"
     priority = "high" if good else "default"
+    lines.append("Check in 9 AM, check out 9 PM the next day.")
     return title, "\n".join(lines), priority
 
 
@@ -143,10 +164,7 @@ def cheapest(state_nights, currency, limit=5):
             if hotel.get("price") is not None:
                 rows.append((hotel["price"], night, hotel["name"]))
     rows.sort()
-    return [
-        f"{date.fromisoformat(n).strftime('%a %d %b')}, {name}: {money(p, currency)}"
-        for p, n, name in rows[:limit]
-    ]
+    return [f"{stay(n)}, {name}: {money(p, currency)}" for p, n, name in rows[:limit]]
 
 
 def alert_topic():
