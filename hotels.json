@@ -8,5 +8,10 @@
   "children": 0,
   "currency": "AED ",
   "offer_url": "https://www.rovehotels.com/en/offer/36-hour-stay/",
-  "max_price": 250
+  "max_price": 250,
+  "pricing": {
+    "tax_rate": 0.225,
+    "fee_per_night": 10,
+    "note": "Prices include 10% service charge, 7% municipality fee, 5% VAT and the AED 10 Tourism Dirham paid at the hotel. The under AED 250 filter uses the room rate."
+  }
 }

@@ -67,6 +67,6 @@ python -m pytest tests               # run tests (needs pytest)
 - One notification per run lists every change: a cheaper night, a price rise, a hotel newly offering the rate, or a hotel no longer offering it.
 - With `max_price` set in `hotels.json` (currently 250), alerts only cover rates that drop or appear under it, and rises or removals of rates that were under it.
 - If the promo code stops being accepted, you get one warning.
-- Prices are the site's room rates before service charge and fees.
+- Alert prices are final prices: the room rate plus the charges Rove's booking page adds (10% service charge, 7% municipality fee, 5% VAT on room and service, and the AED 10 Tourism Dirham paid at the hotel), set under `pricing` in `hotels.json`. The `max_price` filter uses the room rate.
 - Alerts go to a separate ntfy topic, set as the `NTFY_TOPIC_HOTELS` secret. Until that secret exists they go to the main `NTFY_TOPIC`.
 - The `Check hotels` workflow runs every hour. To make that reliable, add a cron-job.org job that POSTs to `https://api.github.com/repos/divitkej/sale-checker/actions/workflows/check-hotels.yml/dispatches` every hour with the body `{"ref":"master"}`.

@@ -2,6 +2,7 @@
 
 import json
 import os
+from decimal import ROUND_HALF_UP, Decimal
 import sys
 import time
 from datetime import date, datetime, timedelta
@@ -125,9 +126,23 @@ def short_dates(nights_, limit=4):
     return text + (f" +{len(days) - limit} more" if len(days) > limit else "")
 
 
-def describe(change, currency):
+def final_price(room, pricing):
+    """Room rate plus taxes and fees the way Rove's booking page totals them.
+
+    pricing holds tax_rate (the share added on top of the room rate) and
+    fee_per_night (a flat fee per room per night). No pricing returns room.
+    """
+    if room is None or not pricing:
+        return room
+    taxes = (Decimal(str(room)) * Decimal(str(pricing["tax_rate"]))).quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+    return float(Decimal(str(room)) + taxes + Decimal(str(pricing.get("fee_per_night", 0))))
+
+
+def describe(change, currency, pricing=None):
     where = f"{stay(change['night'])}, {change['hotel']}"
-    old, new = change["old"], change["new"]
+    old, new = final_price(change["old"], pricing), final_price(change["new"], pricing)
     if change["kind"] == "added":
         return f"{where}: now available at {money(new, currency)}"
     if change["kind"] == "removed":
@@ -137,11 +152,11 @@ def describe(change, currency):
     return f"{where}: {money(old, currency)} to {money(new, currency)} ({direction} {gap})"
 
 
-def digest(changes, currency):
+def digest(changes, currency, pricing=None):
     """Title, body and priority for one notification covering every change."""
     order = {"drop": 0, "added": 1, "hike": 2, "removed": 3}
     changes = sorted(changes, key=lambda c: (order[c["kind"]], c["night"], c["hotel"]))
-    lines = [describe(c, currency) for c in changes]
+    lines = [describe(c, currency, pricing) for c in changes]
     if len(lines) > MAX_LINES:
         lines = lines[:MAX_LINES] + [f"and {len(changes) - MAX_LINES} more changes"]
     good = sum(c["kind"] in ("drop", "added") for c in changes)
@@ -153,18 +168,22 @@ def digest(changes, currency):
         parts.append(f"{bad} up or gone")
     title = f"Rove {', '.join(parts)}: {short_dates(c['night'] for c in changes)}"
     priority = "high" if good else "default"
+    if pricing:
+        lines.append(pricing["note"])
     lines.append("Check in 9 AM, check out 9 PM the next day.")
     return title, "\n".join(lines), priority
 
 
-def cheapest(state_nights, currency, limit=5):
+def cheapest(state_nights, currency, limit=5, pricing=None):
     rows = []
     for night, hotels in state_nights.items():
         for hotel in hotels.values():
             if hotel.get("price") is not None:
                 rows.append((hotel["price"], night, hotel["name"]))
     rows.sort()
-    return [f"{stay(n)}, {name}: {money(p, currency)}" for p, n, name in rows[:limit]]
+    return [
+        f"{stay(n)}, {name}: {money(final_price(p, pricing), currency)}" for p, n, name in rows[:limit]
+    ]
 
 
 def alert_topic():
@@ -302,7 +321,7 @@ def run():
     if changes and not meta.get("started_sent"):
         print(f"(holding {len(changes)} changes until the welcome summary is sent)")
     if not meta.get("started_sent") and new_nights and alert_topic():
-        lines = cheapest(new_nights, currency)
+        lines = cheapest(new_nights, currency, pricing=config.get("pricing"))
         notify(
             "Rove 36-hour tracking started",
             f"Watching {len(new_nights)} nights across all Rove hotels. Prices are before "
@@ -311,7 +330,7 @@ def run():
         )
         meta["started_sent"] = True
     elif changes and meta.get("started_sent"):
-        title, body, priority = digest(changes, currency)
+        title, body, priority = digest(changes, currency, config.get("pricing"))
         print(f"NOTIFY  {title}\n{body}")
         click = (
             search_url(config, date.fromisoformat(changes[0]["night"]))

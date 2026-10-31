@@ -6,6 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from hotels import (  # noqa: E402
     cheapest,
+    final_price,
     short_dates,
     stay,
     diff_night,
@@ -155,3 +156,28 @@ def test_stay_spans_two_days():
 def test_short_dates_caps_the_title():
     nights_ = ["2026-11-06", "2026-11-13", "2026-11-06", "2026-11-20", "2026-11-22", "2026-11-27"]
     assert short_dates(nights_) == "6 Nov, 13 Nov, 20 Nov, 22 Nov +1 more"
+
+
+# Taken from Rove's booking engine: 10% service, 7% municipality, 5% VAT on
+# room plus service, and the AED 10 Tourism Dirham.
+PRICING = {"tax_rate": 0.225, "fee_per_night": 10, "note": "Prices include taxes."}
+
+
+def test_final_price_matches_rove_checkout():
+    assert final_price(223.0, PRICING) == 283.18
+    assert final_price(317.4, PRICING) == 398.82
+
+
+def test_final_price_without_pricing_is_room_rate():
+    assert final_price(223.0, None) == 223.0
+    assert final_price(None, PRICING) is None
+
+
+def test_digest_shows_final_prices():
+    changes = [{"night": "2026-11-06", "hotel": "Rove Expo City", "kind": "drop", "old": 260.0, "new": 223.0}]
+    _, body, _ = digest(changes, "AED ", PRICING)
+    assert body.splitlines() == [
+        "Fri 6 to Sat 7 Nov, Rove Expo City: AED 328.50 to AED 283.18 (down AED 45.32)",
+        "Prices include taxes.",
+        "Check in 9 AM, check out 9 PM the next day.",
+    ]
