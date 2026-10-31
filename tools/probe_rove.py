@@ -1,66 +1,34 @@
-"""One-off probe: find Rove's taxes and fees, and the total shown at checkout."""
+"""One-off probe: read the tax breakdown on Rove's booking page."""
 
-import json
 import re
 
 from playwright.sync_api import sync_playwright
 
-URL = ("https://search.rovehotels.com/ROH?hotel=&datein=11%2F06%2F2026&dateout=11%2F07%2F2026"
-       "&rooms=1&adults=2&children=0&identifier=36HOURS#/")
-
-
-def keys(obj, path=""):
-    if isinstance(obj, dict):
-        for k, v in obj.items():
-            yield f"{path}.{k}"
-            yield from keys(v, f"{path}.{k}")
-    elif isinstance(obj, list) and obj:
-        yield from keys(obj[0], path + "[]")
-
+URL = ("https://reservations.rovehotels.com/rove-expo-2020/book/accommodations?adults=2&children=0"
+       "&children2=0&currency=AED&dateIn=11/06/2026&dateOut=11/07/2026&domain=search.rovehotels.com"
+       "&identifier=36HOURS&languageId=1&portal=ROH&rooms=1")
 
 with sync_playwright() as p:
     browser = p.chromium.launch()
-    page = browser.new_page(locale="en-US")
-    seen = []
-    page.on("response", lambda r: seen.append(r) if "travelclick.com" in r.url else None)
-    page.goto(URL, wait_until="domcontentloaded", timeout=60000)
-    page.wait_for_timeout(15000)
-    avail = None
-    for r in seen:
-        if "/avail" in r.url and r.status == 200:
+    page = browser.new_page(locale="en-US", viewport={"width": 1400, "height": 2400})
+    apis = []
+
+    def grab(r):
+        if r.request.resource_type in ("xhr", "fetch"):
             try:
-                avail = r.json()
+                apis.append((r.status, r.url, r.text()))
             except Exception:  # noqa: BLE001
                 pass
-    hotel = next(h for h in avail["hotelList"] if h.get("isAvailable"))
-    print("HOTEL", hotel["hotelName"], hotel["hotelCode"], hotel["rate"])
-    print("ALL KEYS", sorted(set(keys(hotel)))[:200])
-    for plan in hotel["ratePlans"]:
-        print("\nPLAN", json.dumps({k: v for k, v in plan.items() if k != "rateplanDesc"})[:1500])
-        print("DESC", plan.get("rateplanDesc"))
 
-    # Follow the BOOK button to the hotel's own booking page and read what it shows.
-    seen.clear()
-    pages_before = len(page.context.pages)
-    page.locator("text=BOOK >> visible=true").first.click(timeout=15000)
-    page.wait_for_timeout(8000)
-    book = page.context.pages[-1] if len(page.context.pages) > pages_before else page
-    book.on("response", lambda r: seen.append(r) if "travelclick.com" in r.url else None)
-    book.wait_for_load_state("domcontentloaded")
-    book.wait_for_timeout(15000)
-    print("\nBOOK PAGE", book.url)
-    text = book.inner_text("body")
-    for line in text.splitlines():
-        if re.search(r"tax|fee|charge|vat|dirham|total|AED", line, re.I):
-            print("  |", line.strip()[:200])
-    for r in seen:
-        if r.status == 200 and re.search(r"avail|rate|price|tax", r.url, re.I):
-            try:
-                body = r.text()
-            except Exception:  # noqa: BLE001
-                continue
-            if re.search(r"tax|fee", body, re.I):
-                print("\nAPI", r.url)
-                for m in re.finditer(r'"[^"]*(?:[Tt]ax|[Ff]ee|[Tt]otal)[^"]*"\s*:\s*[^,}\]]+', body):
-                    print("   ", m.group(0)[:200])
+    page.on("response", grab)
+    page.goto(URL, wait_until="domcontentloaded", timeout=60000)
+    page.wait_for_timeout(30000)
+    text = page.inner_text("body")
+    print("=== page text (first 4000 chars)")
+    print(text[:4000])
+    print("\n=== API calls")
+    for status, url, body in apis:
+        print(status, url[:200], len(body))
+        for m in re.finditer(r'"[^"]*(?:[Tt]ax|[Ff]ee|[Tt]otal|[Aa]mount|[Cc]harge)[^"]*"\s*:\s*("[^"]{0,80}"|[^,}\]]{0,30})', body):
+            print("     ", m.group(0)[:160])
     browser.close()
