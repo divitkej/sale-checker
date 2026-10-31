@@ -41,12 +41,10 @@ with sync_playwright() as p:
 
     # Follow the BOOK button to the hotel's own booking page and read what it shows.
     seen.clear()
-    with page.context.expect_page(timeout=20000) as new_page_info:
-        page.get_by_text("BOOK", exact=True).first.click()
-    try:
-        book = new_page_info.value
-    except Exception:  # noqa: BLE001
-        book = page
+    pages_before = len(page.context.pages)
+    page.locator("text=BOOK >> visible=true").first.click(timeout=15000)
+    page.wait_for_timeout(8000)
+    book = page.context.pages[-1] if len(page.context.pages) > pages_before else page
     book.on("response", lambda r: seen.append(r) if "travelclick.com" in r.url else None)
     book.wait_for_load_state("domcontentloaded")
     book.wait_for_timeout(15000)
