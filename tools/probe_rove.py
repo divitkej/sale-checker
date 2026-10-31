@@ -24,11 +24,16 @@ with sync_playwright() as p:
     page.goto(URL, wait_until="domcontentloaded", timeout=60000)
     page.wait_for_timeout(30000)
     text = page.inner_text("body")
-    print("=== page text (first 4000 chars)")
-    print(text[:4000])
-    print("\n=== API calls")
+    print("=== page lines with prices or charges")
+    for line in text.splitlines():
+        line = line.strip()
+        if line and re.search(r"AED|tax|fee|charge|vat|dirham|total|night|stay", line, re.I):
+            print("  |", line[:200])
+    print("\n=== price APIs")
     for status, url, body in apis:
-        print(status, url[:200], len(body))
-        for m in re.finditer(r'"[^"]*(?:[Tt]ax|[Ff]ee|[Tt]otal|[Aa]mount|[Cc]harge)[^"]*"\s*:\s*("[^"]{0,80}"|[^,}\]]{0,30})', body):
+        if not re.search(r"galaxy\.tf|travelclick\.com|rovehotels\.com", url) or "exchange-rates" in url:
+            continue
+        print(status, url[:220], len(body))
+        for m in re.finditer(r'"[^"]*(?:[Tt]ax|[Ff]ee|[Tt]otal|[Cc]harge|[Pp]rice|[Aa]mount)[^"]*"\s*:\s*("[^"]{0,80}"|[^,}\]]{0,30})', body):
             print("     ", m.group(0)[:160])
     browser.close()
