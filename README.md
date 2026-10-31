@@ -65,6 +65,7 @@ python -m pytest tests               # run tests (needs pytest)
 `hotels.py` checks every Rove hotel for each night from today until the end date in `hotels.json`, with the promo code applied. The booking site only loads rates in a browser, so the check opens each search in a headless Chromium and reads the rates the page itself receives.
 
 - One notification per run lists every change: a cheaper night, a price rise, a hotel newly offering the rate, or a hotel no longer offering it.
+- With `max_price` set in `hotels.json` (currently 250), alerts only cover rates that drop or appear under it, and rises or removals of rates that were under it.
 - If the promo code stops being accepted, you get one warning.
 - Prices are the site's room rates before service charge and fees.
 - Alerts go to a separate ntfy topic, set as the `NTFY_TOPIC_HOTELS` secret. Until that secret exists they go to the main `NTFY_TOPIC`.

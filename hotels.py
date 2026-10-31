@@ -89,6 +89,16 @@ def diff_night(night, old, new):
     return changes
 
 
+def within_budget(change, max_price):
+    """Keep drops or new rates that land under max_price, and rises or
+    removals of rates that were under it. No max_price keeps everything."""
+    if max_price is None:
+        return True
+    if change["kind"] in ("drop", "added"):
+        return change["new"] < max_price
+    return change["old"] < max_price
+
+
 def money(value, currency):
     amount = f"{value:,.2f}".removesuffix(".00")
     return f"{currency}{amount}"
@@ -231,7 +241,10 @@ def run():
                 page.close()
             code_results.append(accepted)
             new_nights[key] = hotels
-            changes += diff_night(key, old_nights.get(key, {}), hotels)
+            changes += [
+                c for c in diff_night(key, old_nights.get(key, {}), hotels)
+                if within_budget(c, config.get("max_price"))
+            ]
             open_ = sum(h["price"] is not None for h in hotels.values())
             print(f"OK      {key}: {open_} of {len(hotels)} hotels have a {config['promo_code']} rate")
         browser.close()

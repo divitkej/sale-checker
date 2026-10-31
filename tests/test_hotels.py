@@ -4,7 +4,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from hotels import cheapest, diff_night, digest, nights, parse_avail, search_url  # noqa: E402
+from hotels import (  # noqa: E402
+    cheapest,
+    diff_night,
+    digest,
+    nights,
+    parse_avail,
+    search_url,
+    within_budget,
+)
 
 # Trimmed from a real api.travelclick.com /avail response for Rove.
 AVAIL = {
@@ -107,3 +115,30 @@ def test_digest_caps_length():
 def test_cheapest():
     state = {"2026-11-07": {"1": h("A", 319.2), "2": h("B", None)}, "2026-11-08": {"1": h("A", 299)}}
     assert cheapest(state, "AED ") == ["Sun 08 Nov, A: AED 299", "Sat 07 Nov, A: AED 319.20"]
+
+
+def change(kind, old, new):
+    return {"night": "2026-11-07", "hotel": "A", "kind": kind, "old": old, "new": new}
+
+
+def test_budget_keeps_drops_into_range():
+    assert within_budget(change("drop", 300, 249), 250)
+    assert within_budget(change("drop", 240, 230), 250)
+    assert not within_budget(change("drop", 400, 260), 250)
+    assert not within_budget(change("drop", 300, 250), 250)
+
+
+def test_budget_keeps_new_rates_in_range():
+    assert within_budget(change("added", None, 199), 250)
+    assert not within_budget(change("added", None, 399), 250)
+
+
+def test_budget_keeps_rises_and_removals_of_cheap_rates():
+    assert within_budget(change("hike", 207.2, 257.6), 250)
+    assert within_budget(change("removed", 240, None), 250)
+    assert not within_budget(change("hike", 405, 409), 250)
+    assert not within_budget(change("removed", 300, None), 250)
+
+
+def test_no_budget_keeps_everything():
+    assert within_budget(change("hike", 405, 409), None)

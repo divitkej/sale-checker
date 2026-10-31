@@ -7,5 +7,6 @@
   "adults": 2,
   "children": 0,
   "currency": "AED ",
-  "offer_url": "https://www.rovehotels.com/en/offer/36-hour-stay/"
+  "offer_url": "https://www.rovehotels.com/en/offer/36-hour-stay/",
+  "max_price": 250
 }
