@@ -5,18 +5,22 @@
   "https://cottonon.ae/products/super-baggy-jean-3612684-173": {
     "available": true,
     "failures": 0,
-    "last_change": "2026-10-29 05:30 UTC",
+    "last_change": "2026-11-06 07:45 UTC",
     "lowest": 223.3,
     "notified_price": 223.3,
-    "price": 319.0
+    "price": 223.3,
+    "reminders_sent": [],
+    "sale_ends": "2026-11-12T19:59:00+00:00"
   },
   "https://cottonon.ae/products/super-baggy-jean-3612684-175": {
     "available": true,
     "failures": 0,
-    "last_change": "2026-10-29 05:00 UTC",
+    "last_change": "2026-11-06 07:45 UTC",
     "lowest": 223.3,
     "notified_price": 223.3,
-    "price": 319.0
+    "price": 223.3,
+    "reminders_sent": [],
+    "sale_ends": "2026-11-12T19:59:00+00:00"
   },
   "https://cottonon.ae/products/super-baggy-jean-3612684-79": {
     "available": false,
