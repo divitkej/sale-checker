@@ -60,8 +60,8 @@
     "2026-11-10": {
       "106961": {
         "name": "Rove Downtown Dubai",
-        "price": 629.0,
-        "was": 786.25
+        "price": null,
+        "was": null
       },
       "106965": {
         "name": "Rove Bur Dubai - Healthcare City",
@@ -70,8 +70,8 @@
       },
       "106967": {
         "name": "Rove City Centre, Deira",
-        "price": 465.4,
-        "was": 581.75
+        "price": 475.4,
+        "was": 594.25
       },
       "106969": {
         "name": "Rove Trade Centre",
@@ -538,8 +538,8 @@
       },
       "106967": {
         "name": "Rove City Centre, Deira",
-        "price": 425.4,
-        "was": 531.75
+        "price": 445.4,
+        "was": 556.75
       },
       "106969": {
         "name": "Rove Trade Centre",
@@ -590,8 +590,8 @@
       },
       "106967": {
         "name": "Rove City Centre, Deira",
-        "price": 425.4,
-        "was": 531.75
+        "price": 445.4,
+        "was": 556.75
       },
       "106969": {
         "name": "Rove Trade Centre",
