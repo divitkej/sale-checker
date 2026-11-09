@@ -8,8 +8,8 @@
     "2026-11-09": {
       "106961": {
         "name": "Rove Downtown Dubai",
-        "price": 555.0,
-        "was": 693.75
+        "price": null,
+        "was": null
       },
       "106965": {
         "name": "Rove Bur Dubai - Healthcare City",
@@ -28,8 +28,8 @@
       },
       "106971": {
         "name": "Rove Dubai Marina",
-        "price": null,
-        "was": null
+        "price": 531.0,
+        "was": 663.75
       },
       "107922": {
         "name": "Rove At The Park",
