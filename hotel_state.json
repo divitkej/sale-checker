@@ -60,8 +60,8 @@
     "2026-11-10": {
       "106961": {
         "name": "Rove Downtown Dubai",
-        "price": null,
-        "was": null
+        "price": 629.0,
+        "was": 786.25
       },
       "106965": {
         "name": "Rove Bur Dubai - Healthcare City",
@@ -231,8 +231,8 @@
       },
       "106969": {
         "name": "Rove Trade Centre",
-        "price": 291.0,
-        "was": 363.75
+        "price": 321.0,
+        "was": 401.25
       },
       "106971": {
         "name": "Rove Dubai Marina",
@@ -283,8 +283,8 @@
       },
       "106969": {
         "name": "Rove Trade Centre",
-        "price": 291.0,
-        "was": 363.75
+        "price": 321.0,
+        "was": 401.25
       },
       "106971": {
         "name": "Rove Dubai Marina",
@@ -491,8 +491,8 @@
       },
       "106969": {
         "name": "Rove Trade Centre",
-        "price": 281.0,
-        "was": 351.25
+        "price": 301.0,
+        "was": 376.25
       },
       "106971": {
         "name": "Rove Dubai Marina",
@@ -543,8 +543,8 @@
       },
       "106969": {
         "name": "Rove Trade Centre",
-        "price": 281.0,
-        "was": 351.25
+        "price": 301.0,
+        "was": 376.25
       },
       "106971": {
         "name": "Rove Dubai Marina",
