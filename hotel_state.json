@@ -18,8 +18,8 @@
       },
       "106967": {
         "name": "Rove City Centre, Deira",
-        "price": 605.4,
-        "was": 756.75
+        "price": null,
+        "was": null
       },
       "106969": {
         "name": "Rove Trade Centre",
@@ -620,8 +620,8 @@
       },
       "114050": {
         "name": "Rove City Walk",
-        "price": 341.0,
-        "was": 426.25
+        "price": 451.0,
+        "was": 563.75
       },
       "9879231": {
         "name": "Rove Al Marjan Island",
@@ -672,8 +672,8 @@
       },
       "114050": {
         "name": "Rove City Walk",
-        "price": 381.0,
-        "was": 476.25
+        "price": 451.0,
+        "was": 563.75
       },
       "9879231": {
         "name": "Rove Al Marjan Island",
@@ -724,8 +724,8 @@
       },
       "114050": {
         "name": "Rove City Walk",
-        "price": 381.0,
-        "was": 476.25
+        "price": 451.0,
+        "was": 563.75
       },
       "9879231": {
         "name": "Rove Al Marjan Island",
@@ -776,8 +776,8 @@
       },
       "114050": {
         "name": "Rove City Walk",
-        "price": 381.0,
-        "was": 476.25
+        "price": 451.0,
+        "was": 563.75
       },
       "9879231": {
         "name": "Rove Al Marjan Island",
@@ -828,8 +828,8 @@
       },
       "114050": {
         "name": "Rove City Walk",
-        "price": 381.0,
-        "was": 476.25
+        "price": 451.0,
+        "was": 563.75
       },
       "9879231": {
         "name": "Rove Al Marjan Island",
@@ -880,8 +880,8 @@
       },
       "114050": {
         "name": "Rove City Walk",
-        "price": 341.0,
-        "was": 426.25
+        "price": 381.0,
+        "was": 476.25
       },
       "9879231": {
         "name": "Rove Al Marjan Island",
