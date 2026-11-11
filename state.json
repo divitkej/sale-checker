@@ -9,7 +9,9 @@
     "lowest": 223.3,
     "notified_price": 223.3,
     "price": 223.3,
-    "reminders_sent": [],
+    "reminders_sent": [
+      24
+    ],
     "sale_ends": "2026-11-12T19:59:00+00:00"
   },
   "https://cottonon.ae/products/super-baggy-jean-3612684-175": {
@@ -19,7 +21,9 @@
     "lowest": 223.3,
     "notified_price": 223.3,
     "price": 223.3,
-    "reminders_sent": [],
+    "reminders_sent": [
+      24
+    ],
     "sale_ends": "2026-11-12T19:59:00+00:00"
   },
   "https://cottonon.ae/products/super-baggy-jean-3612684-79": {
