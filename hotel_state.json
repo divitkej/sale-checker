@@ -8,8 +8,8 @@
     "2026-11-12": {
       "106961": {
         "name": "Rove Downtown Dubai",
-        "price": 585.0,
-        "was": 731.25
+        "price": null,
+        "was": null
       },
       "106965": {
         "name": "Rove Bur Dubai - Healthcare City",
@@ -105,8 +105,8 @@
       },
       "9879231": {
         "name": "Rove Al Marjan Island",
-        "price": 369.0,
-        "was": 461.25
+        "price": null,
+        "was": null
       }
     },
     "2026-11-14": {
