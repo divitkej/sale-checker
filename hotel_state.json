@@ -48,8 +48,8 @@
       },
       "114050": {
         "name": "Rove City Walk",
-        "price": 421.0,
-        "was": 526.25
+        "price": 481.0,
+        "was": 601.25
       },
       "9879231": {
         "name": "Rove Al Marjan Island",
@@ -100,13 +100,13 @@
       },
       "114050": {
         "name": "Rove City Walk",
-        "price": 431.0,
-        "was": 538.75
+        "price": 441.0,
+        "was": 551.25
       },
       "9879231": {
         "name": "Rove Al Marjan Island",
-        "price": null,
-        "was": null
+        "price": 369.0,
+        "was": 461.25
       }
     },
     "2026-11-14": {
