@@ -10,7 +10,8 @@
     "notified_price": 223.3,
     "price": 223.3,
     "reminders_sent": [
-      24
+      24,
+      6
     ],
     "sale_ends": "2026-11-12T19:59:00+00:00"
   },
@@ -22,7 +23,8 @@
     "notified_price": 223.3,
     "price": 223.3,
     "reminders_sent": [
-      24
+      24,
+      6
     ],
     "sale_ends": "2026-11-12T19:59:00+00:00"
   },
