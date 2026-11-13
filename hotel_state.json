@@ -95,8 +95,8 @@
       },
       "111997": {
         "name": "Rove La Mer Beach",
-        "price": null,
-        "was": null
+        "price": 605.0,
+        "was": 756.25
       },
       "114050": {
         "name": "Rove City Walk",
@@ -402,8 +402,8 @@
       },
       "111996": {
         "name": "Rove Expo City",
-        "price": 243.0,
-        "was": 303.75
+        "price": 263.0,
+        "was": 328.75
       },
       "111997": {
         "name": "Rove La Mer Beach",
@@ -469,8 +469,8 @@
       },
       "9879231": {
         "name": "Rove Al Marjan Island",
-        "price": 399.0,
-        "was": 498.75
+        "price": 359.0,
+        "was": 448.75
       }
     },
     "2026-11-22": {
@@ -662,8 +662,8 @@
       },
       "111996": {
         "name": "Rove Expo City",
-        "price": 267.0,
-        "was": 333.75
+        "price": 283.0,
+        "was": 353.75
       },
       "111997": {
         "name": "Rove La Mer Beach",
@@ -714,8 +714,8 @@
       },
       "111996": {
         "name": "Rove Expo City",
-        "price": 327.0,
-        "was": 408.75
+        "price": 347.0,
+        "was": 433.75
       },
       "111997": {
         "name": "Rove La Mer Beach",
@@ -771,8 +771,8 @@
       },
       "111997": {
         "name": "Rove La Mer Beach",
-        "price": 555.0,
-        "was": 693.75
+        "price": 585.0,
+        "was": 731.25
       },
       "114050": {
         "name": "Rove City Walk",
