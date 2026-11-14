@@ -43,8 +43,8 @@
       },
       "111997": {
         "name": "Rove La Mer Beach",
-        "price": 609.0,
-        "was": 761.25
+        "price": null,
+        "was": null
       },
       "114050": {
         "name": "Rove City Walk",
@@ -95,8 +95,8 @@
       },
       "111997": {
         "name": "Rove La Mer Beach",
-        "price": 599.0,
-        "was": 748.75
+        "price": null,
+        "was": null
       },
       "114050": {
         "name": "Rove City Walk",
