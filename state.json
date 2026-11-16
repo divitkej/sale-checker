@@ -24,11 +24,18 @@
   },
   "https://cottonon.ae/products/super-baggy-jean-3612684-79": {
     "available": false,
-    "failures": 68,
+    "failures": 69,
     "last_change": "2026-11-02 14:30 UTC",
     "lowest": 50.0,
     "notified_price": 50.0,
     "price": 50.0
+  },
+  "https://cottonon.ae/products/super-baggy-pleated-pant-3613268-06": {
+    "available": true,
+    "failures": 0,
+    "last_change": "2026-11-16 22:49 UTC",
+    "lowest": 319.0,
+    "price": 319.0
   },
   "https://cottonon.ae/products/super-baggy-track-pant-3613068-30": {
     "available": true,
