@@ -24,7 +24,7 @@
   },
   "https://cottonon.ae/products/super-baggy-jean-3612684-79": {
     "available": false,
-    "failures": 69,
+    "failures": 70,
     "last_change": "2026-11-02 14:30 UTC",
     "lowest": 50.0,
     "notified_price": 50.0,
@@ -50,5 +50,12 @@
     "last_change": "2026-11-16 22:47 UTC",
     "lowest": 169.0,
     "price": 169.0
+  },
+  "https://cottonon.ae/products/super-baggy-worker-pant-3614003-07": {
+    "available": true,
+    "failures": 0,
+    "last_change": "2026-11-16 22:50 UTC",
+    "lowest": 289.0,
+    "price": 289.0
   }
 }
