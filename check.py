@@ -351,6 +351,9 @@ def fetch_price(product):
                         print(f"Cart price unavailable for {product['url']}: {exc}")
                 return price, available, variant, buy_url, sale_ends
     if product.get("size") is not None:
+        if feed and not product.get("selector"):
+            # Say what the store answered, such as 404 for a removed product.
+            raise ValueError(f"product feed returned HTTP {response.status_code}")
         raise ValueError("size tracking only works on Shopify stores")
 
     response = requests.get(product["url"], headers=HEADERS, timeout=30)
