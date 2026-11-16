@@ -30,14 +30,10 @@
     "target_price": 150
   },
   {
-    "name": "Super Baggy Track Pant",
+    "name": "Super Baggy Track Pant, black",
     "url": "https://cottonon.ae/products/super-baggy-track-pant-3613068-30",
     "currency": "AED ",
-    "size": [
-      "W32L32",
-      "W32L34",
-      "32"
-    ],
+    "size": "M",
     "target_price": 150
   }
 ]
