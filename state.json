@@ -66,7 +66,7 @@
   },
   "https://cottonon.ae/products/super-baggy-worker-pant-3614003-07": {
     "available": true,
-    "failures": 0,
+    "failures": 1,
     "last_change": "2026-11-16 22:50 UTC",
     "lowest": 289.0,
     "price": 289.0
