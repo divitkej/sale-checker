@@ -219,14 +219,14 @@ def shopify_buy_url(url, variant_id):
     return f"{parts.scheme}://{parts.netloc}/cart/{variant_id}:1"
 
 
-def send(call, *args, attempts=3, **kwargs):
+def send(call, *args, attempts=4, **kwargs):
     """Make an HTTP call, waiting and retrying when the server says 429 Too Many Requests."""
     for attempt in range(attempts):
         response = call(*args, **kwargs)
         if response.status_code != 429 or attempt == attempts - 1:
             return response
         retry_after = response.headers.get("Retry-After", "")
-        time.sleep(int(retry_after) if retry_after.isdigit() else 5 * (attempt + 1))
+        time.sleep(int(retry_after) if retry_after.isdigit() else 10 * (attempt + 1))
     return response
 
 
@@ -337,7 +337,7 @@ def fetch_price(product):
     """
     feed = shopify_feed_url(product["url"])
     if feed and not product.get("selector"):
-        response = requests.get(feed, headers=HEADERS, timeout=30)
+        response = send(requests.get, feed, headers=HEADERS, timeout=30)
         if response.ok:
             try:
                 data = response.json()
@@ -520,7 +520,7 @@ def run(test_notification=False):
     summary = []
     for index, product in enumerate(products):
         if index:
-            time.sleep(1)  # space out requests so the store does not rate limit us
+            time.sleep(4)  # space out requests so the store does not rate limit us
         url = product["url"]
         name = product.get("name") or url
         entry = state.get(url, {})
