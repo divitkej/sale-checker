@@ -6,6 +6,7 @@ import json
 import os
 import re
 import sys
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
@@ -218,6 +219,17 @@ def shopify_buy_url(url, variant_id):
     return f"{parts.scheme}://{parts.netloc}/cart/{variant_id}:1"
 
 
+def send(call, *args, attempts=3, **kwargs):
+    """Make an HTTP call, waiting and retrying when the server says 429 Too Many Requests."""
+    for attempt in range(attempts):
+        response = call(*args, **kwargs)
+        if response.status_code != 429 or attempt == attempts - 1:
+            return response
+        retry_after = response.headers.get("Retry-After", "")
+        time.sleep(int(retry_after) if retry_after.isdigit() else 5 * (attempt + 1))
+    return response
+
+
 def shopify_cart_price(url, variant_id):
     """Price after automatic discounts, read from a throwaway cart.
 
@@ -229,12 +241,13 @@ def shopify_cart_price(url, variant_id):
     origin = f"{parts.scheme}://{parts.netloc}"
     with requests.Session() as session:
         session.headers.update(HEADERS)
-        session.post(
+        send(
+            session.post,
             f"{origin}/cart/add.js",
             json={"items": [{"id": variant_id, "quantity": 1}]},
             timeout=30,
         ).raise_for_status()
-        response = session.get(f"{origin}/cart.js", timeout=30)
+        response = send(session.get, f"{origin}/cart.js", timeout=30)
         response.raise_for_status()
         cart = response.json()
     titles = [
@@ -347,8 +360,9 @@ def fetch_price(product):
                             known = [ends[t] for t in titles if t in ends]
                             sale_ends = min(known) if known else None
                     except (requests.RequestException, ValueError, KeyError) as exc:
-                        # Fall back to the listed price rather than failing the check.
-                        print(f"Cart price unavailable for {product['url']}: {exc}")
+                        # The listed price can be higher than the checkout price, so
+                        # using it here would look like a sale ending. Skip this check.
+                        raise ValueError(f"checkout price unavailable: {exc}") from exc
                 return price, available, variant, buy_url, sale_ends
     if product.get("size") is not None:
         if feed and not product.get("selector"):
@@ -376,9 +390,19 @@ def notify(title, message, url=None, priority="high", buy_url=None):
         actions.append(f"view, View product, {url}")
     if actions:
         headers["Actions"] = "; ".join(actions)
-    requests.post(
-        f"{server}/{topic}", data=message.encode("utf-8"), headers=headers, timeout=30
-    ).raise_for_status()
+    try:
+        send(
+            requests.post,
+            f"{server}/{topic}",
+            data=message.encode("utf-8"),
+            headers=headers,
+            timeout=30,
+        ).raise_for_status()
+    except requests.RequestException as exc:
+        # A failed alert must not stop the run or lose this run's prices.
+        print(f"Could not send notification {title!r}: {exc}")
+        return False
+    return True
 
 
 def format_price(value, currency):
@@ -494,7 +518,9 @@ def run(test_notification=False):
 
     state = load_json(STATE_FILE, {})
     summary = []
-    for product in products:
+    for index, product in enumerate(products):
+        if index:
+            time.sleep(1)  # space out requests so the store does not rate limit us
         url = product["url"]
         name = product.get("name") or url
         entry = state.get(url, {})
@@ -576,17 +602,13 @@ def run(test_notification=False):
         or os.environ.get("AUTOMATIC_RUN") == "true"
     )
     if automatic and not meta.get("schedule_confirmed"):
-        try:
-            notify(
-                "Automatic checks are running",
-                "This is the first automatic check. Prices are checked every 30 minutes.\n"
-                + "\n".join(summary),
-                priority="default",
-            )
-            meta["schedule_confirmed"] = True
-        except requests.RequestException as exc:
-            # Try again on the next scheduled run instead of losing this run's prices.
-            print(f"Could not send the schedule notice: {exc}")
+        # If sending fails, try again on the next scheduled run.
+        meta["schedule_confirmed"] = notify(
+            "Automatic checks are running",
+            "This is the first automatic check. Prices are checked every 30 minutes.\n"
+            + "\n".join(summary),
+            priority="default",
+        )
 
     STATE_FILE.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return 0

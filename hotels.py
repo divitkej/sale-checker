@@ -12,6 +12,8 @@ from zoneinfo import ZoneInfo
 
 import requests
 
+from check import send
+
 ROOT = Path(__file__).parent
 CONFIG_FILE = ROOT / "hotels.json"
 STATE_FILE = ROOT / "hotel_state.json"
@@ -201,9 +203,19 @@ def notify(title, message, priority="default", click=None):
     if click:
         headers["Click"] = click
         headers["Actions"] = f"view, Open Rove, {click}"
-    requests.post(
-        f"{server}/{topic}", data=message.encode("utf-8"), headers=headers, timeout=30
-    ).raise_for_status()
+    try:
+        send(
+            requests.post,
+            f"{server}/{topic}",
+            data=message.encode("utf-8"),
+            headers=headers,
+            timeout=30,
+        ).raise_for_status()
+    except requests.RequestException as exc:
+        # A failed alert must not stop the run or lose this run's prices.
+        print(f"Could not send notification {title!r}: {exc}")
+        return False
+    return True
 
 
 def read_night(page, url, timeout=45):

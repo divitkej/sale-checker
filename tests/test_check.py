@@ -314,3 +314,47 @@ def test_due_reminder_steps():
 
 def test_due_reminder_sends_only_closest():
     assert due_reminder(timedelta(minutes=30), []) == 1
+
+
+class FakeResponse:
+    def __init__(self, status, data=None, headers=None):
+        self.status_code = status
+        self.ok = status < 400
+        self._data = data
+        self.headers = headers or {}
+
+    def json(self):
+        return self._data
+
+    def raise_for_status(self):
+        if not self.ok:
+            raise check.requests.HTTPError(f"{self.status_code} error")
+
+
+import check  # noqa: E402
+
+
+def test_send_retries_after_429(monkeypatch):
+    replies = [FakeResponse(429, headers={"Retry-After": "0"}), FakeResponse(200)]
+    monkeypatch.setattr(check.time, "sleep", lambda s: None)
+    assert check.send(lambda: replies.pop(0)).status_code == 200
+
+
+def test_cart_failure_skips_the_check_instead_of_using_list_price(monkeypatch):
+    feed = {"variants": [{"id": 5, "title": "X / W32L32", "option1": "X", "option2": "W32L32",
+                          "price": 19900, "available": True}]}
+    monkeypatch.setattr(check.requests, "get", lambda *a, **k: FakeResponse(200, feed))
+
+    def busy(*a, **k):
+        raise check.requests.HTTPError("429 Too Many Requests")
+
+    monkeypatch.setattr(check, "shopify_cart_price", busy)
+    with pytest.raises(ValueError, match="checkout price unavailable"):
+        check.fetch_price({"url": JEAN_URL, "size": "W32L32"})
+
+
+def test_failed_notification_does_not_crash(monkeypatch):
+    monkeypatch.setenv("NTFY_TOPIC", "t")
+    monkeypatch.setattr(check.time, "sleep", lambda s: None)
+    monkeypatch.setattr(check.requests, "post", lambda *a, **k: FakeResponse(429))
+    assert check.notify("Title", "Body") is False
