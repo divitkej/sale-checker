@@ -54,7 +54,7 @@
   },
   "https://cottonon.ae/products/super-baggy-pleated-pant-3613268-06": {
     "available": true,
-    "failures": 1,
+    "failures": 0,
     "last_change": "2026-11-20 15:30 UTC",
     "lowest": 223.3,
     "notified_price": 223.3,
@@ -84,7 +84,7 @@
   },
   "https://cottonon.ae/products/super-baggy-worker-pant-3614003-07": {
     "available": true,
-    "failures": 1,
+    "failures": 0,
     "last_change": "2026-11-20 14:45 UTC",
     "lowest": 202.3,
     "notified_price": 202.3,
