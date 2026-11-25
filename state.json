@@ -9,7 +9,9 @@
     "lowest": 139.3,
     "notified_price": 139.3,
     "price": 139.3,
-    "reminders_sent": [],
+    "reminders_sent": [
+      24
+    ],
     "sale_ends": "2026-11-26T19:59:00+00:00"
   },
   "https://cottonon.ae/products/low-rise-wide-jean-2060787-25": {
@@ -19,7 +21,9 @@
     "lowest": 139.3,
     "notified_price": 139.3,
     "price": 139.3,
-    "reminders_sent": [],
+    "reminders_sent": [
+      24
+    ],
     "sale_ends": "2026-11-26T19:59:00+00:00"
   },
   "https://cottonon.ae/products/plush-tie-waist-wide-leg-sweatpant-6339502-02": {
@@ -29,7 +33,9 @@
     "lowest": 125.3,
     "notified_price": 125.3,
     "price": 125.3,
-    "reminders_sent": [],
+    "reminders_sent": [
+      24
+    ],
     "sale_ends": "2026-11-26T19:59:00+00:00"
   },
   "https://cottonon.ae/products/super-baggy-jean-3612684-173": {
@@ -39,7 +45,9 @@
     "lowest": 223.3,
     "notified_price": 223.3,
     "price": 223.3,
-    "reminders_sent": [],
+    "reminders_sent": [
+      24
+    ],
     "sale_ends": "2026-11-26T19:59:00+00:00"
   },
   "https://cottonon.ae/products/super-baggy-jean-3612684-175": {
@@ -49,7 +57,9 @@
     "lowest": 223.3,
     "notified_price": 223.3,
     "price": 223.3,
-    "reminders_sent": [],
+    "reminders_sent": [
+      24
+    ],
     "sale_ends": "2026-11-26T19:59:00+00:00"
   },
   "https://cottonon.ae/products/super-baggy-pleated-pant-3613268-06": {
@@ -59,7 +69,9 @@
     "lowest": 223.3,
     "notified_price": 223.3,
     "price": 223.3,
-    "reminders_sent": [],
+    "reminders_sent": [
+      24
+    ],
     "sale_ends": "2026-11-26T19:59:00+00:00"
   },
   "https://cottonon.ae/products/super-baggy-track-pant-3613068-30": {
@@ -69,7 +81,9 @@
     "lowest": 118.3,
     "notified_price": 118.3,
     "price": 118.3,
-    "reminders_sent": [],
+    "reminders_sent": [
+      24
+    ],
     "sale_ends": "2026-11-26T19:59:00+00:00"
   },
   "https://cottonon.ae/products/super-baggy-track-pant-3613068-31": {
@@ -79,7 +93,9 @@
     "lowest": 118.3,
     "notified_price": 118.3,
     "price": 118.3,
-    "reminders_sent": [],
+    "reminders_sent": [
+      24
+    ],
     "sale_ends": "2026-11-26T19:59:00+00:00"
   },
   "https://cottonon.ae/products/super-baggy-worker-pant-3614003-07": {
@@ -89,7 +105,9 @@
     "lowest": 202.3,
     "notified_price": 202.3,
     "price": 202.3,
-    "reminders_sent": [],
+    "reminders_sent": [
+      24
+    ],
     "sale_ends": "2026-11-26T19:59:00+00:00"
   }
 }
