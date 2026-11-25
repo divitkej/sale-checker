@@ -33,13 +33,13 @@
       },
       "107922": {
         "name": "Rove At The Park",
-        "price": 227.2,
-        "was": 284.0
+        "price": 287.2,
+        "was": 359.0
       },
       "111996": {
         "name": "Rove Expo City",
-        "price": 323.0,
-        "was": 403.75
+        "price": null,
+        "was": null
       },
       "111997": {
         "name": "Rove La Mer Beach",
@@ -85,8 +85,8 @@
       },
       "107922": {
         "name": "Rove At The Park",
-        "price": 227.2,
-        "was": 284.0
+        "price": 247.2,
+        "was": 309.0
       },
       "111996": {
         "name": "Rove Expo City",
