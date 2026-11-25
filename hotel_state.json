@@ -5,58 +5,6 @@
     "started_sent": true
   },
   "nights": {
-    "2026-11-25": {
-      "106961": {
-        "name": "Rove Downtown Dubai",
-        "price": 629.0,
-        "was": 786.25
-      },
-      "106965": {
-        "name": "Rove Bur Dubai - Healthcare City",
-        "price": 377.0,
-        "was": 471.25
-      },
-      "106967": {
-        "name": "Rove City Centre, Deira",
-        "price": 595.4,
-        "was": 744.25
-      },
-      "106969": {
-        "name": "Rove Trade Centre",
-        "price": 511.0,
-        "was": 638.75
-      },
-      "106971": {
-        "name": "Rove Dubai Marina",
-        "price": 581.0,
-        "was": 726.25
-      },
-      "107922": {
-        "name": "Rove At The Park",
-        "price": 357.6,
-        "was": 447.0
-      },
-      "111996": {
-        "name": "Rove Expo City",
-        "price": null,
-        "was": null
-      },
-      "111997": {
-        "name": "Rove La Mer Beach",
-        "price": 605.0,
-        "was": 756.25
-      },
-      "114050": {
-        "name": "Rove City Walk",
-        "price": 451.0,
-        "was": 563.75
-      },
-      "9879231": {
-        "name": "Rove Al Marjan Island",
-        "price": 239.2,
-        "was": 299.0
-      }
-    },
     "2026-11-26": {
       "106961": {
         "name": "Rove Downtown Dubai",
