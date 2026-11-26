@@ -18,13 +18,13 @@
       },
       "106967": {
         "name": "Rove City Centre, Deira",
-        "price": 485.4,
-        "was": 606.75
+        "price": 465.4,
+        "was": 581.75
       },
       "106969": {
         "name": "Rove Trade Centre",
-        "price": 411.0,
-        "was": 513.75
+        "price": 361.0,
+        "was": 451.25
       },
       "106971": {
         "name": "Rove Dubai Marina",
@@ -43,13 +43,13 @@
       },
       "111997": {
         "name": "Rove La Mer Beach",
-        "price": 625.0,
-        "was": 781.25
+        "price": 559.0,
+        "was": 698.75
       },
       "114050": {
         "name": "Rove City Walk",
-        "price": 461.0,
-        "was": 576.25
+        "price": 481.0,
+        "was": 601.25
       },
       "9879231": {
         "name": "Rove Al Marjan Island",
@@ -65,8 +65,8 @@
       },
       "106965": {
         "name": "Rove Bur Dubai - Healthcare City",
-        "price": 337.0,
-        "was": 421.25
+        "price": 321.0,
+        "was": 401.25
       },
       "106967": {
         "name": "Rove City Centre, Deira",
@@ -105,8 +105,8 @@
       },
       "9879231": {
         "name": "Rove Al Marjan Island",
-        "price": 279.0,
-        "was": 348.75
+        "price": 299.0,
+        "was": 373.75
       }
     }
   }
