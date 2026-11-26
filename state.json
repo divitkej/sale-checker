@@ -4,7 +4,7 @@
   },
   "https://cottonon.ae/products/low-rise-wide-jean-2060787-23": {
     "available": true,
-    "failures": 1,
+    "failures": 0,
     "last_change": "2026-11-20 11:15 UTC",
     "lowest": 139.3,
     "notified_price": 139.3,
@@ -17,7 +17,7 @@
   },
   "https://cottonon.ae/products/low-rise-wide-jean-2060787-25": {
     "available": true,
-    "failures": 1,
+    "failures": 0,
     "last_change": "2026-11-20 11:15 UTC",
     "lowest": 139.3,
     "notified_price": 139.3,
@@ -30,7 +30,7 @@
   },
   "https://cottonon.ae/products/plush-tie-waist-wide-leg-sweatpant-6339502-02": {
     "available": true,
-    "failures": 1,
+    "failures": 0,
     "last_change": "2026-11-20 11:15 UTC",
     "lowest": 125.3,
     "notified_price": 125.3,
@@ -69,7 +69,7 @@
   },
   "https://cottonon.ae/products/super-baggy-pleated-pant-3613268-06": {
     "available": true,
-    "failures": 1,
+    "failures": 0,
     "last_change": "2026-11-20 15:30 UTC",
     "lowest": 223.3,
     "notified_price": 223.3,
@@ -108,7 +108,7 @@
   },
   "https://cottonon.ae/products/super-baggy-worker-pant-3614003-07": {
     "available": true,
-    "failures": 1,
+    "failures": 0,
     "last_change": "2026-11-20 14:45 UTC",
     "lowest": 202.3,
     "notified_price": 202.3,
